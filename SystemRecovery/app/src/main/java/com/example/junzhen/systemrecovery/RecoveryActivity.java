@@ -22,21 +22,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.math.BigInteger;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class RecoveryActivity extends AppCompatActivity {
 
     private static final int OUTPUT_BUFFER_SIZE = 1024;
-    private String sha1_stardard = "f32dffc2186e7b4b247efb3409e4065bb2fb4a20";
+    private int imagecount;
+    private String sha1_stardard;
     private Button create_wim;
     private Button cancle_wim;
     private Button cancel_download;
@@ -56,7 +56,7 @@ public class RecoveryActivity extends AppCompatActivity {
     private TextView wiminfo;
     private Button cancle_bt;
     private LinearLayout chooselayout;
-    private TextView wancheng;
+    //private TextView wancheng;
     private File file;
     private Button help;
 
@@ -66,7 +66,7 @@ public class RecoveryActivity extends AppCompatActivity {
     private CheckIntegrity checkIntegrity = null;
     //private FileDownloadThread fdt = null;
     /*private String url = "http://cdimage.ubuntu.com/ubuntukylin/releases/14.04.2/release/ubuntukylin-14.04.2-desktop-amd64.iso";*/
-    private String url = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+    private String url;
     private String wimfile;
     private String target;
     private boolean isRight = false;
@@ -90,6 +90,7 @@ public class RecoveryActivity extends AppCompatActivity {
         cancel = (Button) findViewById(R.id.cancel);*/
         cancel_download = (Button) findViewById(R.id.cancel_wim);
         cancel_download.setEnabled(false);
+        chooseimageid = (EditText) findViewById(R.id.chooseimageid);
         //wancheng = (TextView) findViewById(R.id.wancheng);
         help = (Button) findViewById(R.id.help);
         View.OnClickListener helplistener = new View.OnClickListener() {
@@ -112,7 +113,7 @@ public class RecoveryActivity extends AppCompatActivity {
                 Toast.makeText(getApplication(), "检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………", Toast.LENGTH_LONG).show();
                 create_wim.setEnabled(false);
                 download.setEnabled(false);
-                //chooseimageid.setEnabled(false);
+                chooseimageid.setEnabled(false);
                 if(checkIntegrity == null)
                 {
                     checkIntegrity = newcheckThread();
@@ -195,19 +196,8 @@ public class RecoveryActivity extends AppCompatActivity {
         wiminfo = (TextView) findViewById(R.id.wiminfo);
         chooselayout = (LinearLayout) findViewById(R.id.chooselayout);
         //String path = "/storage/emulated/legacy/tsing_recovery/windows.wim";
-        String str;
-        if (fileIsExists(wimfile)) {
-            str = exec("wimlib-imagex-32 info " + wimfile + "\n");
-            wiminfo.setTextColor(Color.BLACK);
-        } else {
-            str = "没有相关ESD文件，请点击下方的自动下载按钮！！";
-            wiminfo.setTextColor(Color.RED);
-            wiminfo.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            //bt.setEnabled(false);
-            chooselayout.setVisibility(View.GONE);
-        }
-        wiminfo.setText(str);
-
+        imagecount = 0;
+        setWiminfo();
        /* FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
                                    @Override
@@ -222,7 +212,41 @@ public class RecoveryActivity extends AppCompatActivity {
         );*/
     }
 
+    private void setWiminfo(){
+        String str;
+        if (fileIsExists(wimfile)) {
+            str = exec("wimlib-imagex-32 info " + wimfile + "\n");
+            wiminfo.setTextColor(Color.BLACK);
+            wiminfo.setText(str);
+            /*String[] info = str.split("\n");
+            for(int i=0;i<info.length;i++)
+            {
+                String number;
+                if(info[i].contains("Image Count"))
+                {
+                    number = info[i].split(":")[1];
+                    String[] numbers = number.split(" ");
+                    int[] nums = new int[numbers.length];
+                    for(int j=0;j<numbers.length;j++)
+                    {
+                        nums[j] = Integer.parseInt(numbers[j]);
+                        if(nums[j]>0)
+                            imagecount = nums[j];
+                    }
+                    wiminfo.setText(imagecount);
+                }
+            }*/
 
+        } else {
+            str = "没有相关ESD文件，请点击下方的自动下载按钮！！";
+            wiminfo.setTextColor(Color.RED);
+            wiminfo.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+            //bt.setEnabled(false);
+            chooselayout.setVisibility(View.GONE);
+            wiminfo.setText(str);
+        }
+
+    }
     private void helpdialog() {
         final AlertDialog builder = new AlertDialog.Builder(RecoveryActivity.this).create();
         builder.setTitle("帮助");
@@ -250,7 +274,8 @@ public class RecoveryActivity extends AppCompatActivity {
         return mUpdateUIThread;
     }
     public CheckIntegrity newcheckThread() {
-        checkIntegrity = new CheckIntegrity(handler,wimfile);
+        Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
+        checkIntegrity = new CheckIntegrity(handler,wimfile,sha1_stardard);
         return checkIntegrity;
     }
 
@@ -258,9 +283,35 @@ public class RecoveryActivity extends AppCompatActivity {
         String configname = "/storage/emulated/legacy/tsing_recovery/recovery.config";
         file = new File(configname);
         if (!file.exists()) {
+            FileWriter fw;
+            BufferedWriter bw;
+            try {
+                StringBuffer config = new StringBuffer("");
+                //config.append(sourcefile.getText().toString() + "\n");
+                sha1_stardard = "f32dffc2186e7b4b247efb3409e4065bb2fb4a20";
+                wimfile = "/storage/emulated/legacy/tsing_recovery/window.wim";
+                url = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+                config.append(sha1_stardard+"\n");
+                config.append(wimfile + "\n");
+                config.append(url);
+                fw = new FileWriter(file);//
+                // 创建FileWriter对象，用来写入字符流
+                bw = new BufferedWriter(fw); // 将缓冲对文件的输出
+                //String myreadline = datetime + "[]" + str;
+
+
+                bw.write(config + "\n"); // 写入文件
+
+                bw.newLine();
+                bw.flush(); // 刷新该流的缓冲
+                bw.close();
+                fw.close();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             //target = "/dev/block/sda4";
-            wimfile = "/storage/emulated/legacy/tsing_recovery/window.wim";
-            url = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+
         } else {
             FileReader fr;
             BufferedReader br;
@@ -273,8 +324,9 @@ public class RecoveryActivity extends AppCompatActivity {
                     temp.append(inline + "\n");
                 }
                 String[] x = temp.toString().split("\n");
-                wimfile = x[0];
-                url = x[1];
+                sha1_stardard = x[0];
+                wimfile = x[1];
+                url = x[2];
                 br.close();
                 fr.close();
 
@@ -284,12 +336,11 @@ public class RecoveryActivity extends AppCompatActivity {
         }
     }
 
-    public boolean check() {
+    /*public boolean check() {
         this.file = new File(wimfile);
         if (file.exists()) {
             try {
                 String str = getFileSHA(this.file);
-                wancheng.setText(str);
                 Toast.makeText(getApplication(), str, Toast.LENGTH_LONG).show();
                 if (sha1_stardard.equals(str)) {
                     Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
@@ -310,7 +361,7 @@ public class RecoveryActivity extends AppCompatActivity {
             return false;
         }
 
-    }
+    }*/
     /*public FileDownloadThread newfdt() {
         try {
             URL url = new URL(this.url);
@@ -412,7 +463,7 @@ public class RecoveryActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-
+                chooseimageid.setEnabled(true);
             }
         });
         builder.create();
@@ -652,12 +703,13 @@ public class RecoveryActivity extends AppCompatActivity {
 
             if (params != null) {
                 if (params[0].equals("check")) {
-                    if(check()) {
+                    /*if(check()) {
                         typeselect();
                         return "true";
                     }
                     else
-                        return "false";
+                        return "false";*/
+                    return "false";
 
                 } else {
                     try {
@@ -779,6 +831,7 @@ public class RecoveryActivity extends AppCompatActivity {
                 isRight = false;
             create_wim.setEnabled(true);
             download.setEnabled(true);
+            chooseimageid.setEnabled(true);
         }
 
         //onCancelled方法用于在取消执行中的任务时更改UI
@@ -889,7 +942,7 @@ public class RecoveryActivity extends AppCompatActivity {
      * @throws NoSuchAlgorithmException
      * @throws IOException
      */
-    private static String getFileSHA(File file) throws NoSuchAlgorithmException, IOException {
+   /* private static String getFileSHA(File file) throws NoSuchAlgorithmException, IOException {
         if (!file.isFile()) {
             return null;
         }
@@ -905,7 +958,7 @@ public class RecoveryActivity extends AppCompatActivity {
         in.close();
         BigInteger bigInt = new BigInteger(1, digest.digest());
         return bigInt.toString(16);
-    }
+    }*/
 
     private Handler handler = new Handler() {
         @Override
@@ -970,15 +1023,18 @@ public class RecoveryActivity extends AppCompatActivity {
                     Toast.makeText(getApplication(), "文件不存在", Toast.LENGTH_LONG).show();
                     create_wim.setEnabled(true);
                     download.setEnabled(true);
+                    chooseimageid.setEnabled(true);
                     break;
                 case FileUtil.fileRight:
                     Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
                     dialog();
+
                     break;
                 case FileUtil.fileWrong:
                     Toast.makeText(getApplication(), "文件SHA1检验失败，请重新下载", Toast.LENGTH_LONG).show();
                     create_wim.setEnabled(true);
                     download.setEnabled(true);
+                    chooseimageid.setEnabled(true);
                     break;
             }
             super.handleMessage(msg);

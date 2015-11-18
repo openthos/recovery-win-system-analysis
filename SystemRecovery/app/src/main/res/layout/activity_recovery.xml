@@ -14,8 +14,9 @@
     <include
         android:id="@+id/choose"
         layout="@layout/choose"
-        android:layout_width="wrap_content"
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:layout_weight="1"></include>
 
  <!--   <LinearLayout

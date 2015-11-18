@@ -16,11 +16,12 @@ import java.security.NoSuchAlgorithmException;
 public class CheckIntegrity extends Thread {
     private Handler handler;
     private String file;
-    private String sha1_stardard = "f32dffc2186e7b4b247efb3409e4065bb2fb4a20";
+    private String sha1_stardard;
 
-    public CheckIntegrity(Handler handler,String file){
+    public CheckIntegrity(Handler handler,String file,String sha1_stardard){
         this.handler = handler;
         this.file = file;
+        this.sha1_stardard = sha1_stardard;
     }
     public void run()
     {
