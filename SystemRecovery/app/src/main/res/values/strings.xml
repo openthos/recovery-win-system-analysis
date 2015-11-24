@@ -14,7 +14,8 @@
     3.命令行：执行shell命令
     点击“保存”按钮后，存储在配置文件</string>
     <string name="welcome" >欢迎使用清华同方恢复系统！</string>
-    <string name="introduction">您可以通过使用本软件的恢复功能，将系统恢复至出厂设置状态！</string>
+    <string name="introduction">您可以通过使用本软件，将系统恢复至出厂设置状态！</string>
     <string name="title_activity_recovery">RecoveryActivity</string>
     <string name="wechat">tongfang</string>
+    <string name="tip">请选择您要恢复的系统！</string>
 </resources>

@@ -3,10 +3,22 @@
     android:orientation="vertical" android:layout_width="wrap_content"
     android:layout_height="wrap_content">
     <TextView
+        android:id="@+id/tip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/tip"
+        android:textSize="32sp"/>
+    <ListView
+        android:id="@+id/list_view"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        ></ListView>
+    <TextView
         android:id="@+id/wiminfo"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
-    <LinearLayout
+        android:layout_height="wrap_content"
+        android:textSize="32sp"/>
+    <!--<LinearLayout
         android:id="@+id/chooselayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content">
@@ -24,7 +36,7 @@
         android:ems="10"
         android:textColor="@color/black"
         android:id="@+id/chooseimageid" />
-    </LinearLayout>
+    </LinearLayout>-->
 <!--<RelativeLayout
     android:layout_width="wrap_content"
     android:layout_height="wrap_content

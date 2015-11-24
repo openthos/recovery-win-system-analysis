@@ -35,11 +35,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="微信账号："
+            android:textSize="32sp"
             android:id="@+id/wechat" />
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/wechat"
+            android:textSize="32sp"
             android:id="@+id/wechataccount"
             android:layout_toEndOf="@id/wechat" />
         <Button
@@ -47,6 +49,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="开始"
+            android:textSize="32sp"
+            android:textColor="@color/lightgreen"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true" />
     </RelativeLayout>

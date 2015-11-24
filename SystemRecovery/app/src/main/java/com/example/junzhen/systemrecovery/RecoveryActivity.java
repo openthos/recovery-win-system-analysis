@@ -15,9 +15,13 @@ import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -31,13 +35,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RecoveryActivity extends AppCompatActivity {
 
     private static final int OUTPUT_BUFFER_SIZE = 1024;
     private int imagecount;
     private String sha1_stardard;
-    private Button create_wim;
+    //private Button create_wim;
     private Button cancle_wim;
     private Button cancel_download;
     private EditText source;
@@ -54,13 +60,22 @@ public class RecoveryActivity extends AppCompatActivity {
     public int downLoadFileSize;
     public int fileSize;
     private TextView wiminfo;
+    private ListView listview;
+    private String[] listviewdata;
+    private String chooseid;
+    private TextView tip;
+
     private Button cancle_bt;
     private LinearLayout chooselayout;
     //private TextView wancheng;
     private File file;
     private Button help;
 
-    ProgressDialog progressDialog;
+    List<String> index;
+    List<String> name;
+    ProgressDialog downloadprogressDialog;
+    ProgressDialog recoveryprogressDialog;
+    ProgressDialog checkprogressDialog;
 
     private updateUIThread mUpdateUIThread = null;
     private CheckIntegrity checkIntegrity = null;
@@ -81,18 +96,18 @@ public class RecoveryActivity extends AppCompatActivity {
 
         //info = (TextView) findViewById(R.id.return_info);
         //info.setTextSize(20);
-        progressDialog = new ProgressDialog(RecoveryActivity.this);
-        progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        create_wim = (Button) findViewById(R.id.creat_wim);
+
+        //create_wim = (Button) findViewById(R.id.creat_wim);
        // progressBar = (ProgressBar) findViewById(R.id.progress);
         download = (Button) findViewById(R.id.dowmload);
        /* save = (Button) findViewById(R.id.save);
         cancel = (Button) findViewById(R.id.cancel);*/
         cancel_download = (Button) findViewById(R.id.cancel_wim);
         cancel_download.setEnabled(false);
-        chooseimageid = (EditText) findViewById(R.id.chooseimageid);
+        //chooseimageid = (EditText) findViewById(R.id.chooseimageid);
         //wancheng = (TextView) findViewById(R.id.wancheng);
         help = (Button) findViewById(R.id.help);
+        tip = (TextView) findViewById(R.id.tip);
         View.OnClickListener helplistener = new View.OnClickListener() {
 
             @Override
@@ -103,7 +118,7 @@ public class RecoveryActivity extends AppCompatActivity {
 
             }
         };
-        View.OnClickListener createlistener = new View.OnClickListener() {
+       /* View.OnClickListener createlistener = new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
@@ -113,7 +128,7 @@ public class RecoveryActivity extends AppCompatActivity {
                 Toast.makeText(getApplication(), "检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………", Toast.LENGTH_LONG).show();
                 create_wim.setEnabled(false);
                 download.setEnabled(false);
-                chooseimageid.setEnabled(false);
+                //chooseimageid.setEnabled(false);
                 if(checkIntegrity == null)
                 {
                     checkIntegrity = newcheckThread();
@@ -123,23 +138,26 @@ public class RecoveryActivity extends AppCompatActivity {
                     checkIntegrity = newcheckThread();
                     checkIntegrity.start();
                 }
-                /*MyTask task = new MyTask();
-                task.execute("check");*/
-                /*try {
+                *//*MyTask task = new MyTask();
+                task.execute("check");*//*
+                *//*try {
                     task.wait();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                }*/
+                }*//*
 
                 //typeselect();
             }
-        };
-        View.OnClickListener downloadlistener = new View.OnClickListener() {
+        };*/
+        final View.OnClickListener downloadlistener = new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 if (isNetworkAvailable()) {
                     // TODO Auto-generated method stub
+                    downloadprogressDialog = new ProgressDialog(RecoveryActivity.this);
+                    downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
                     getConfig();
                     if (!fileIsExists(wimfile)) {
                         if (mUpdateUIThread == null) {
@@ -150,7 +168,7 @@ public class RecoveryActivity extends AppCompatActivity {
                             mUpdateUIThread = newmyThread();
                             mUpdateUIThread.start();
                         }
-                        create_wim.setEnabled(false);
+                        //create_wim.setEnabled(false);
                         download.setEnabled(false);
                         cancel_download.setEnabled(true);
                     }else {
@@ -163,7 +181,7 @@ public class RecoveryActivity extends AppCompatActivity {
                                 mUpdateUIThread = newmyThread();
                                 mUpdateUIThread.start();
                             }
-                            create_wim.setEnabled(false);
+                            //create_wim.setEnabled(false);
                             download.setEnabled(false);
                             cancel_download.setEnabled(true);
                         }
@@ -190,14 +208,18 @@ public class RecoveryActivity extends AppCompatActivity {
 
         help.setOnClickListener(helplistener);
         download.setOnClickListener(downloadlistener);
-        create_wim.setOnClickListener(createlistener);
+       // create_wim.setOnClickListener(createlistener);
         cancel_download.setOnClickListener(canceldownloadlistener);
         getConfig();
         wiminfo = (TextView) findViewById(R.id.wiminfo);
-        chooselayout = (LinearLayout) findViewById(R.id.chooselayout);
+        listview = (ListView) findViewById(R.id.list_view);
+        //chooselayout = (LinearLayout) findViewById(R.id.chooselayout);
         //String path = "/storage/emulated/legacy/tsing_recovery/windows.wim";
         imagecount = 0;
+        index = new ArrayList<>();
+        name = new ArrayList<>();
         setWiminfo();
+
        /* FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
                                    @Override
@@ -210,39 +232,80 @@ public class RecoveryActivity extends AppCompatActivity {
                                    }
                                }
         );*/
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
     private void setWiminfo(){
         String str;
         if (fileIsExists(wimfile)) {
             str = exec("wimlib-imagex-32 info " + wimfile + "\n");
-            wiminfo.setTextColor(Color.BLACK);
-            wiminfo.setText(str);
-            /*String[] info = str.split("\n");
+            wiminfo.setVisibility(View.GONE);
+            //wiminfo.setTextColor(Color.BLACK);
+            //wiminfo.setText(str);
+            String[] info = str.split("\n");
+
             for(int i=0;i<info.length;i++)
             {
-                String number;
-                if(info[i].contains("Image Count"))
+                String t_index;
+                String t_name;
+                if(info[i].contains("Index"))
                 {
-                    number = info[i].split(":")[1];
-                    String[] numbers = number.split(" ");
-                    int[] nums = new int[numbers.length];
-                    for(int j=0;j<numbers.length;j++)
-                    {
-                        nums[j] = Integer.parseInt(numbers[j]);
-                        if(nums[j]>0)
-                            imagecount = nums[j];
-                    }
-                    wiminfo.setText(imagecount);
+                    if(info[i].split(":")[0].contains("Boot"))
+                        continue;
+                    t_index = info[i].split(":")[1];
+                    index.add(t_index);
                 }
-            }*/
+                if(info[i].contains("Name"))
+                {
+                    t_name = info[i].split(":")[1];
+                    name.add(t_name);
+                }
+            }
+            int num = index.size();
+            listviewdata = new String[num];
+            for(int i=0;i<num;i++){
+                listviewdata[i] = index.get(i)+"——"+name.get(i);
+            }
+            ArrayAdapter<String> adapter = new ArrayAdapter<String>(RecoveryActivity.this,android.R.layout.simple_list_item_1,listviewdata);
+            listview.setAdapter(adapter);
+            listview.setBackgroundColor(Color.GREEN);
+            listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    chooseid = String.valueOf(position+1);
+                    checkprogressDialog = new ProgressDialog(RecoveryActivity.this);
 
+                    //Toast.makeText(getApplication(), "", Toast.LENGTH_LONG).show();
+                    //create_wim.setEnabled(false);
+                    download.setEnabled(false);
+                    //chooseimageid.setEnabled(false);
+                    if(checkIntegrity == null)
+                    {
+                        checkIntegrity = newcheckThread();
+                        checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
+                        checkprogressDialog.setCancelable(false);
+                        checkprogressDialog.show();
+                        checkIntegrity.start();
+                    }else {
+                        checkIntegrity = null;
+                        checkIntegrity = newcheckThread();
+                        checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
+                        checkprogressDialog.setCancelable(false);
+                        checkprogressDialog.show();
+                        checkIntegrity.start();
+                    }
+
+                }
+            });
         } else {
+
             str = "没有相关ESD文件，请点击下方的自动下载按钮！！";
+            listview.setVisibility(View.GONE);
+            tip.setVisibility(View.GONE);
             wiminfo.setTextColor(Color.RED);
             wiminfo.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
             //bt.setEnabled(false);
-            chooselayout.setVisibility(View.GONE);
+//            chooselayout.setVisibility(View.GONE);
             wiminfo.setText(str);
         }
 
@@ -280,6 +343,7 @@ public class RecoveryActivity extends AppCompatActivity {
     }
 
     private void getConfig() {
+        FileUtil.setMkdir(getApplicationContext());
         String configname = "/storage/emulated/legacy/tsing_recovery/recovery.config";
         file = new File(configname);
         if (!file.exists()) {
@@ -435,11 +499,11 @@ public class RecoveryActivity extends AppCompatActivity {
         builder.show();
         return remove;
     }
-    public void dialog() {
-        chooseimageid = (EditText) findViewById(R.id.chooseimageid);
+    public void dialog(final String str) {
+        //chooseimageid = (EditText) findViewById(R.id.chooseimageid);
         final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
-        final String src = chooseimageid.getText().toString();
-        create_wim.setEnabled(true);
+        //final String src = chooseimageid.getText().toString();
+        //create_wim.setEnabled(true);
         download.setEnabled(true);
         builder.setTitle("警告");
         builder.setMessage("点击'确认'按钮，恢复系统默认安装在Windows系统盘，原有系统数据将会丢失");
@@ -448,12 +512,10 @@ public class RecoveryActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                /*src = source.getText().toString();
-                //src = "";
-                decompress(src);*/
 
-                decompress(src);
-                create_wim.setEnabled(false);
+
+                decompress(str);
+                //create_wim.setEnabled(false);
                 download.setEnabled(false);
 
             }
@@ -463,7 +525,7 @@ public class RecoveryActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                chooseimageid.setEnabled(true);
+                //chooseimageid.setEnabled(true);
             }
         });
         builder.create();
@@ -472,7 +534,7 @@ public class RecoveryActivity extends AppCompatActivity {
 
     public void typeselect() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
-        create_wim.setEnabled(true);
+        //create_wim.setEnabled(true);
         download.setEnabled(true);
         builder.setTitle("选择用户模式");
         builder.setMessage("\"开发人员模式\"提供ESD文件的详细信息，供开发人员选择");
@@ -482,7 +544,7 @@ public class RecoveryActivity extends AppCompatActivity {
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
                 decompress("1");
-                create_wim.setEnabled(false);
+                //create_wim.setEnabled(false);
                 download.setEnabled(false);
 
             }
@@ -501,7 +563,7 @@ public class RecoveryActivity extends AppCompatActivity {
 
     public void reboot() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
-        create_wim.setEnabled(true);
+        //create_wim.setEnabled(true);
         download.setEnabled(true);
         builder.setTitle("重新启动");
         builder.setMessage("系统已经恢复成功！");
@@ -693,7 +755,11 @@ public class RecoveryActivity extends AppCompatActivity {
             //Log.i(TAG, "onPreExecute() called");
 
             //info.setText("loading...");
-            progressDialog.show();
+            recoveryprogressDialog = new ProgressDialog(RecoveryActivity.this);
+            recoveryprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            recoveryprogressDialog.setMessage("正在恢复Windows系统，请耐心等待！");
+            recoveryprogressDialog.setCancelable(false);
+            recoveryprogressDialog.show();
         }
 
         //doInBackground方法内部执行后台任务,不可在此方法内修改UI
@@ -817,21 +883,21 @@ public class RecoveryActivity extends AppCompatActivity {
         protected void onProgressUpdate(String... progresses) {
             //progressBar.setProgress(Integer.parseInt(progresses[0]));
             //info.setText(progresses[0] + "%");
-            progressDialog.setProgress(Integer.parseInt(progresses[0]));
+            recoveryprogressDialog.setProgress(Integer.parseInt(progresses[0]));
         }
 
         //onPostExecute方法用于在执行完后台任务后更新UI,显示结果
         @Override
         protected void onPostExecute(String result) {
             //Toast.makeText(getApplication(), result, Toast.LENGTH_LONG).show();
-            progressDialog.dismiss();
+            recoveryprogressDialog.dismiss();
             if(result.equals("系统恢复成功"))
                 reboot();
             if(result.equals("false"))
                 isRight = false;
-            create_wim.setEnabled(true);
+            //create_wim.setEnabled(true);
             download.setEnabled(true);
-            chooseimageid.setEnabled(true);
+            //chooseimageid.setEnabled(true);
         }
 
         //onCancelled方法用于在取消执行中的任务时更改UI
@@ -967,16 +1033,19 @@ public class RecoveryActivity extends AppCompatActivity {
                 case FileUtil.startDownloadMeg:
 
                     //progressBar.setMax(mUpdateUIThread.getFileSize());   //开始
-                    progressDialog.setMax(mUpdateUIThread.getFileSize());
-                    progressDialog.show();
-                    progressDialog.onStart();
+                    downloadprogressDialog.setMax(mUpdateUIThread.getFileSize());
+                    downloadprogressDialog.setMessage("正在下载，请耐心等待……");
+                    downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                    downloadprogressDialog.show();
+                    downloadprogressDialog.setCancelable(false);
+                    downloadprogressDialog.onStart();
                     break;
                 case FileUtil.updateDownloadMeg:
                     if (!mUpdateUIThread.isCompleted())   //下载
                     {
                         //Log.e(TAG, "已下载：" + mUpdateUIThread.getDownloadSize());
                         //progressBar.setProgress(mUpdateUIThread.getDownloadSize());
-                        progressDialog.setProgress(mUpdateUIThread.getDownloadSize());
+                        downloadprogressDialog.setProgress(mUpdateUIThread.getDownloadSize());
                         //.setText("下载速度：" + mUpdateUIThread.getDownloadSpeed() + "k/秒"/*       下载百分比" + mUpdateUIThread.getDownloadPercent() + "%"*/);
                     } else {
                         //info.setText("下载完成");
@@ -984,7 +1053,7 @@ public class RecoveryActivity extends AppCompatActivity {
                     break;
                 case FileUtil.endDownloadMeg:
                     Toast.makeText(RecoveryActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
-                    progressDialog.dismiss();
+                    downloadprogressDialog.dismiss();
 				/*apk安装界面跳转*/
                    /* String filename = FileUtil.getFileName(url);
                     String str = "/tsing_recovery/" + filename;
@@ -995,7 +1064,7 @@ public class RecoveryActivity extends AppCompatActivity {
                     //exec("mv /storage/emulated/legacy/tsing_recovery/" + filename + " /system/test/test.wim");*/
                     //info.setText("下载完成");
                     //.setProgress(0);
-                    create_wim.setEnabled(true);
+                    //create_wim.setEnabled(true);
                     download.setEnabled(true);
                     cancel_download.setEnabled(false);
                     break;
@@ -1004,10 +1073,10 @@ public class RecoveryActivity extends AppCompatActivity {
                     exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
                     //info.setText("下载取消");
                     //progressBar.setProgress(0);
-                    create_wim.setEnabled(true);
+                    //create_wim.setEnabled(true);
                     download.setEnabled(true);
                     cancel_download.setEnabled(false);
-                    progressDialog.dismiss();
+                    downloadprogressDialog.dismiss();
 
                     break;
                 case FileUtil.timeout:
@@ -1015,26 +1084,27 @@ public class RecoveryActivity extends AppCompatActivity {
                     exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
                     //.setText("连接超时");
                     //progressBar.setProgress(0);
-                    create_wim.setEnabled(true);
+                    //create_wim.setEnabled(true);
                     download.setEnabled(true);
                     cancel_download.setEnabled(false);
                     break;
                 case FileUtil.fileNotExist:
                     Toast.makeText(getApplication(), "文件不存在", Toast.LENGTH_LONG).show();
-                    create_wim.setEnabled(true);
+                    checkprogressDialog.dismiss();
+                    //create_wim.setEnabled(true);
                     download.setEnabled(true);
-                    chooseimageid.setEnabled(true);
                     break;
                 case FileUtil.fileRight:
                     Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
-                    dialog();
+                    checkprogressDialog.dismiss();
+                    dialog(chooseid);
 
                     break;
                 case FileUtil.fileWrong:
                     Toast.makeText(getApplication(), "文件SHA1检验失败，请重新下载", Toast.LENGTH_LONG).show();
-                    create_wim.setEnabled(true);
+                    checkprogressDialog.dismiss();
+                   // create_wim.setEnabled(true);
                     download.setEnabled(true);
-                    chooseimageid.setEnabled(true);
                     break;
             }
             super.handleMessage(msg);
