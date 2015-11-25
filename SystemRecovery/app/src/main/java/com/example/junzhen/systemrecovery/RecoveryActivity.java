@@ -56,15 +56,19 @@ public class RecoveryActivity extends AppCompatActivity {
     private Button bt;
     private EditText chooseimageid;
 
-    private static String src;
+    //private  String src;
     public int downLoadFileSize;
     public int fileSize;
     private TextView wiminfo;
     private ListView listview;
     private String[] listviewdata;
     private String chooseid;
+    private String choose_section;
     private TextView tip;
+    private ListView section_list;
 
+
+    private String[] data;;
     private Button cancle_bt;
     private LinearLayout chooselayout;
     //private TextView wancheng;
@@ -73,6 +77,7 @@ public class RecoveryActivity extends AppCompatActivity {
 
     List<String> index;
     List<String> name;
+    List<String> section_detail;
     ProgressDialog downloadprogressDialog;
     ProgressDialog recoveryprogressDialog;
     ProgressDialog checkprogressDialog;
@@ -108,6 +113,7 @@ public class RecoveryActivity extends AppCompatActivity {
         //wancheng = (TextView) findViewById(R.id.wancheng);
         help = (Button) findViewById(R.id.help);
         tip = (TextView) findViewById(R.id.tip);
+
         View.OnClickListener helplistener = new View.OnClickListener() {
 
             @Override
@@ -499,7 +505,7 @@ public class RecoveryActivity extends AppCompatActivity {
         builder.show();
         return remove;
     }
-    public void dialog(final String str) {
+    public void dialog() {
         //chooseimageid = (EditText) findViewById(R.id.chooseimageid);
         final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
         //final String src = chooseimageid.getText().toString();
@@ -512,9 +518,7 @@ public class RecoveryActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-
-
-                decompress(str);
+                decompress();
                 //create_wim.setEnabled(false);
                 download.setEnabled(false);
 
@@ -532,6 +536,7 @@ public class RecoveryActivity extends AppCompatActivity {
         builder.show();
     }
 
+
     public void typeselect() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
         //create_wim.setEnabled(true);
@@ -543,7 +548,7 @@ public class RecoveryActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                decompress("1");
+                decompress();
                 //create_wim.setEnabled(false);
                 download.setEnabled(false);
 
@@ -974,11 +979,11 @@ public class RecoveryActivity extends AppCompatActivity {
         }
     }
 
-    public void decompress(String src) {
+    public void decompress() {
 
-        Toast.makeText(getApplication(), "展开" + src, Toast.LENGTH_LONG).show();
-        String dir = "";
-        String info = exec("blkid");
+        //Toast.makeText(getApplication(), "展开" + src, Toast.LENGTH_LONG).show();
+
+        /*String info = exec("blkid");
         String[] target = info.split("\n");
         for (int i = 0; i < target.length; i++) {
             if (target[i].contains("ntfs")) {
@@ -990,16 +995,73 @@ public class RecoveryActivity extends AppCompatActivity {
                 }
             }
         }
+        */
+
+
+        String dir = "/dev/block/sda"+choose_section;
+        /*for(int i=0;i<section_detail.size();i++){
+            //for(int j=0;j<section_detail.get(i).length;j++)
+
+        }
+        Toast.makeText(getApplication(),section_detail.get(2),Toast.LENGTH_SHORT).show();*/
 
         String cmd1 = "mkntfs -f " + dir;
-        String cmd2 = "wimlib-imagex-32 apply " + wimfile + " " + src + " " + dir;
+        String cmd2 = "wimlib-imagex-32 apply " + wimfile + " " + chooseid + " " + dir;
         Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
         Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();
         MyTask myTask = new MyTask();
         myTask.execute(cmd1, cmd2);
-
+        //Toast.makeText(getApplication(), section_select(), Toast.LENGTH_LONG).show();
     }
 
+    private void section_select(){
+        String section_cmd = "fdisk -l /dev/block/sda";
+        String info = exec(section_cmd);
+        String[] section_info = info.split("\n");
+        section_detail = new ArrayList<>();
+        for(int i=0;i<section_info.length;i++){
+            if(section_info[i].contains("Number") && section_info[i].contains("Start") && section_info[i].contains("End")){
+                for(int j=i+1;j<section_info.length;j++){
+                    String[] temp = section_info[j].split("\\s+");
+                    section_detail.add(temp[1]+"  "+temp[4]);
+                }
+                break;
+            }
+        }
+        final AlertDialog.Builder section_select = new AlertDialog.Builder(RecoveryActivity.this);
+        section_select.setTitle("请选择分区");
+
+        int num  = section_detail.size();
+        data = new String[num];
+        for(int i=0;i<num;i++) {
+            data[i] = section_detail.get(i);
+        }
+        section_select.setItems(data, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                //Toast.makeText(RecoveryActivity.this, data[which], Toast.LENGTH_SHORT).show();
+                choose_section = String.valueOf(which + 1);
+                dialog();
+
+            }
+        });
+        section_select.create().show();
+        /*section_select.setPositiveButton("确定",new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                Toast.makeText(RecoveryActivity.this, "确定", Toast.LENGTH_SHORT).show();
+                choose_section = "0";
+            }
+        });*/
+
+
+        /*if(choose_section.equals("0"))
+            return "";
+        else
+            return "/dev/block/sda"+choose_section;*/
+    }
     /**
      * get file md5
      *
@@ -1097,7 +1159,8 @@ public class RecoveryActivity extends AppCompatActivity {
                 case FileUtil.fileRight:
                     Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
                     checkprogressDialog.dismiss();
-                    dialog(chooseid);
+                    section_select();
+
 
                     break;
                 case FileUtil.fileWrong:
