@@ -244,10 +244,12 @@ public class RecoveryActivity extends AppCompatActivity {
     private void setWiminfo(){
         String str;
         if (fileIsExists(wimfile)) {
-            str = exec("wimlib-imagex-32 info " + wimfile + "\n");
+            str = exec("wimlib-imagex info " + wimfile + "\n");
+            //str = exec("ls");
             wiminfo.setVisibility(View.GONE);
             //wiminfo.setTextColor(Color.BLACK);
             //wiminfo.setText(str);
+            Toast.makeText(getApplication(), str, Toast.LENGTH_LONG).show();
             String[] info = str.split("\n");
 
             for(int i=0;i<info.length;i++)
@@ -272,7 +274,7 @@ public class RecoveryActivity extends AppCompatActivity {
             for(int i=0;i<num;i++){
                 listviewdata[i] = index.get(i)+"——"+name.get(i);
             }
-            ArrayAdapter<String> adapter = new ArrayAdapter<String>(RecoveryActivity.this,android.R.layout.simple_list_item_1,listviewdata);
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(RecoveryActivity.this,android.R.layout.simple_list_item_1,listviewdata);
             listview.setAdapter(adapter);
             listview.setBackgroundColor(Color.GREEN);
             listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -283,7 +285,7 @@ public class RecoveryActivity extends AppCompatActivity {
 
                     //Toast.makeText(getApplication(), "", Toast.LENGTH_LONG).show();
                     //create_wim.setEnabled(false);
-                    download.setEnabled(false);
+                    download.setEnabled(true);
                     //chooseimageid.setEnabled(false);
                     if(checkIntegrity == null)
                     {
@@ -317,6 +319,8 @@ public class RecoveryActivity extends AppCompatActivity {
 
     }
     private void helpdialog() {
+        Toast.makeText(getApplication(), name.get(0), Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplication(), index.get(0), Toast.LENGTH_LONG).show();
         final AlertDialog builder = new AlertDialog.Builder(RecoveryActivity.this).create();
         builder.setTitle("帮助");
         View view = LayoutInflater.from(getApplicationContext()).inflate(R.layout.help, null);
@@ -520,7 +524,7 @@ public class RecoveryActivity extends AppCompatActivity {
                 // TODO Auto-generated method stub
                 decompress();
                 //create_wim.setEnabled(false);
-                download.setEnabled(false);
+                download.setEnabled(true);
 
             }
         });
@@ -1006,7 +1010,7 @@ public class RecoveryActivity extends AppCompatActivity {
         Toast.makeText(getApplication(),section_detail.get(2),Toast.LENGTH_SHORT).show();*/
 
         String cmd1 = "mkntfs -f " + dir;
-        String cmd2 = "wimlib-imagex-32 apply " + wimfile + " " + chooseid + " " + dir;
+        String cmd2 = "wimlib-imagex apply " + wimfile + " " + chooseid + " " + dir;
         Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
         Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();
         MyTask myTask = new MyTask();
@@ -1031,18 +1035,42 @@ public class RecoveryActivity extends AppCompatActivity {
         final AlertDialog.Builder section_select = new AlertDialog.Builder(RecoveryActivity.this);
         section_select.setTitle("请选择分区");
 
+
         int num  = section_detail.size();
         data = new String[num];
         for(int i=0;i<num;i++) {
-            data[i] = section_detail.get(i);
+            switch (i) {
+                case 0:
+                    data[i] = section_detail.get(i) + "  " + "MSR分区";
+                    break;
+                case 1:
+                    data[i] = section_detail.get(i) + "  " + "EFI分区";
+                    break;
+                case 2:
+                    data[i] = section_detail.get(i) + "  " + "Microsoft预留分区";
+                    break;
+                default:
+                    data[i] = section_detail.get(i);
+            }
+
         }
         section_select.setItems(data, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
                 //Toast.makeText(RecoveryActivity.this, data[which], Toast.LENGTH_SHORT).show();
-                choose_section = String.valueOf(which + 1);
-                dialog();
+                switch (which) {
+                    case 0:
+                    case 1:
+                    case 2:
+                        Toast.makeText(getApplication(), "不能恢复到该分区", Toast.LENGTH_LONG).show();
+                        break;
+
+                    default: {
+                        choose_section = String.valueOf(which + 1);
+                        dialog();
+                    }
+                }
 
             }
         });
@@ -1127,7 +1155,8 @@ public class RecoveryActivity extends AppCompatActivity {
                     //info.setText("下载完成");
                     //.setProgress(0);
                     //create_wim.setEnabled(true);
-                    download.setEnabled(true);
+
+                    //.setEnabled(true);
                     cancel_download.setEnabled(false);
                     break;
                 case FileUtil.cancleDownloadMeg:
