@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 android:id="@+id/ly_main_weixin"
 android:layout_width="wrap_content"
 android:layout_height="wrap_content"
@@ -11,11 +11,20 @@ android:layout_height="wrap_content"
 android:text="@string/welcome"
 android:textSize="48pt"
     android:layout_centerHorizontal="true"/>
-<TextView
+<!--<TextView
 android:layout_width="wrap_content"
 android:layout_height="wrap_content"
 android:text="@string/introduction"
 android:textSize="24pt"
-    android:layout_below="@+id/welcome"
-    android:layout_centerHorizontal="true"/>
-    </RelativeLayout>
+    android:layout_centerHorizontal="true"/>-->
+    <ListView
+        android:id="@+id/list_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        ></ListView>
+    <ListView
+        android:id="@+id/list_view_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        ></ListView>
+    </LinearLayout>

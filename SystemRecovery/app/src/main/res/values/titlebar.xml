@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="TitlebarBackgroundStyle">
+        <item name="android:background">@drawable/titlebar</item>
+    </style>
+    <style name="Theme.MyCustomTheme" parent="android:Theme">
+        <item name="android:windowTitleBackgroundStyle">@style/TitlebarBackgroundStyle</item>
+        <item name="android:windowTitleSize">45dp</item>
+    </style>
+</resources>

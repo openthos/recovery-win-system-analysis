@@ -66,7 +66,10 @@ public class CheckIntegrity extends Thread {
         }
         in.close();
         BigInteger bigInt = new BigInteger(1, digest.digest());
-        return bigInt.toString(16);
+        String result = bigInt.toString(16);
+        if(result.length() != 40)
+            result = "0" + result;
+        return result;
     }
 
     private void sendMsg(int what) {
