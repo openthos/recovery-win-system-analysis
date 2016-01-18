@@ -9,21 +9,18 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.BaseAdapter;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -39,6 +36,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,9 +45,9 @@ import java.util.Map;
 ;
 
 
-public class MainActivity extends Activity   {
+public class MainActivity extends Activity {
 
-   // private ConfigTab configTab;
+    // private ConfigTab configTab;
     private MainTab mainTab;
     private static final int OUTPUT_BUFFER_SIZE = 1024;
 
@@ -67,16 +65,20 @@ public class MainActivity extends Activity   {
     private Button begin;
     private Button system;
     private Button partition;
+    private Button back_begin;
+    private Button back_system;
 
 
     private String wimfile;
 
     private File file;
 
-    private TextView welcome;
+    private LinearLayout welcome;
 
     List<String> index;
     List<String> name;
+    List<BigInteger> image_size;
+    List<BigInteger> disk_size;
     List<String> section_detail;
 
     private boolean isRight = false;
@@ -88,41 +90,61 @@ public class MainActivity extends Activity   {
     List<Map<String, Object>> listems = new ArrayList<Map<String, Object>>();
 
     private SimpleAdapter listItemAdapter;
-    private ArrayList<HashMap<String, Object>>   listItems;
+    private ArrayList<HashMap<String, Object>> listItems;
+
+    private int pos=-1;
+    private int pos_sys=-1;
 
 
-    private String chooseid;
-    private String choose_section;
+    private String chooseid="";
+    private String choose_section="";
     private String url;
+
     private CheckIntegrity checkIntegrity = null;
+    private updateUIThread mUpdateUIThread = null;
+
     private String sha1_stardard;
 
     ProgressDialog checkprogressDialog;
     ProgressDialog recoveryprogressDialog;
+    ProgressDialog downloadprogressDialog;
+    private TextView wechat;
+    private TextView wechataccount;
+
+
+
     @SuppressLint("NewApi")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        setTheme(R.style.Theme_MyCustomTheme);
+        //setTheme(R.style.Theme_MyCustomTheme);
         super.onCreate(savedInstanceState);
 
-        //initViews();
-        //fragmentManager = getFragmentManager();
-        requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
+
+        //requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
         setContentView(R.layout.activity_main);
-        /*getWindow().setFeatureInt(Window.FEATURE_CUSTOM_TITLE,      // 注意顺序
-                R.layout.title);*/
+
         //打开APP的界面，“继续”按钮
         begin = (Button) findViewById(R.id.begin);
         system = (Button) findViewById(R.id.system);
         partition = (Button) findViewById(R.id.partition);
+        back_begin = (Button) findViewById(R.id.back_begin);
+        back_system = (Button) findViewById(R.id.back_system);
+
         listview = (ListView) findViewById(R.id.list_view);
         listview_section = (ListView) findViewById(R.id.list_view_section);
-        welcome = (TextView) findViewById(R.id.welcome);
+        welcome = (LinearLayout) findViewById(R.id.welcome);
+        wechat = (TextView) findViewById(R.id.wechat);
+        wechataccount = (TextView) findViewById(R.id.wechataccount);
 
+        //默认显示 “继续” 按钮，欢迎文字
         system.setVisibility(View.GONE);
         partition.setVisibility(View.GONE);
+        back_begin.setVisibility(View.GONE);
+        back_system.setVisibility(View.GONE);
         listview.setVisibility(View.GONE);
         listview_section.setVisibility(View.GONE);
+
+        //所有的按钮事件
         OnClickListener beginlistener = new OnClickListener() {
 
             @Override
@@ -131,10 +153,19 @@ public class MainActivity extends Activity   {
                 // TODO Auto-generated method stub
                 /*Intent intent = new Intent(MainActivity.this,RecoveryActivity.class);
                 startActivity(intent);*/
-                setWiminfo();
-                begin.setVisibility(View.GONE);
-                welcome.setVisibility(View.GONE);
-                system.setVisibility(View.VISIBLE);
+                if (fileIsExists(wimfile)) {
+                    setWiminfo();
+                    begin.setVisibility(View.GONE);
+                    welcome.setVisibility(View.GONE);
+                    wechat.setVisibility(View.GONE);
+                    wechataccount.setVisibility(View.GONE);
+
+                    back_begin.setVisibility(View.VISIBLE);
+                    system.setVisibility(View.VISIBLE);
+                } else {
+                    //弹出下载对话框
+                    download_dialog();
+                }
             }
         };
         begin.setOnClickListener(beginlistener);
@@ -147,8 +178,24 @@ public class MainActivity extends Activity   {
             public void onClick(View v) {
 
                 // TODO Auto-generated method stub
-                checkintergrity();
-                system.setVisibility(View.GONE);
+                if (!chooseid.equals("")) {
+                    checkintergrity();
+
+                } else {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("提示");
+                    builder.setMessage("选择你所需要恢复的系统");
+                    builder.setNeutralButton("确定", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+
+                        }
+                    });
+                    builder.create();
+                    builder.show();
+                }
             }
         };
         system.setOnClickListener(systemlistener);
@@ -161,94 +208,159 @@ public class MainActivity extends Activity   {
             public void onClick(View v) {
 
                 // TODO Auto-generated method stub
-                dialog();
+                if(!choose_section.equals("")) {
+                    dialog();
+                }else{
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("提示");
+                    builder.setMessage("选择你所恢复到的系统分区！");
+                    builder.setNeutralButton("确定", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+
+                        }
+                    });
+                    builder.create();
+                    builder.show();
+                }
+
             }
         };
         partition.setOnClickListener(partitionlistener);
+
+        OnClickListener back_beginlistener = new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                // TODO Auto-generated method stub
+                begin.setVisibility(View.VISIBLE);
+                welcome.setVisibility(View.VISIBLE);
+                wechat.setVisibility(View.VISIBLE);
+                wechataccount.setVisibility(View.VISIBLE);
+
+                system.setVisibility(View.GONE);
+                back_begin.setVisibility(View.GONE);
+                listview.setVisibility(View.GONE);
+
+                chooseid = "";
+                choose_section = "";
+
+            }
+        };
+        back_begin.setOnClickListener(back_beginlistener);
+
+        OnClickListener back_systemlistener = new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                // TODO Auto-generated method stub
+                chooseid = "";
+                choose_section = "";
+                set_listview();
+                system.setVisibility(View.VISIBLE);
+                back_begin.setVisibility(View.VISIBLE);
+                listview.setVisibility(View.VISIBLE);
+
+                listview_section.setVisibility(View.GONE);
+                partition.setVisibility(View.GONE);
+                back_system.setVisibility(View.GONE);
+
+
+            }
+        };
+        back_system.setOnClickListener(back_systemlistener);
+        getConfig();
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 
-    private void setWiminfo(){
+    private void setWiminfo() {
         String str;
-        getConfig();
+
         index = new ArrayList<>();
         name = new ArrayList<>();
+        image_size = new ArrayList<>();
         //Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
-        if (fileIsExists(wimfile)) {
-            listview.setVisibility(View.VISIBLE);
+
+        if (listems.isEmpty()) {
+
             //展示windows系统列表
             str = exec("wimlib-imagex info " + wimfile + "\n");
             String[] info = str.split("\n");
 
-            for(int i=0;i<info.length;i++)
-            {
+            for (int i = 0; i < info.length; i++) {
                 String t_index;
                 String t_name;
-                if(info[i].contains("Index"))
-                {
-                    if(info[i].split(":")[0].contains("Boot"))
+                String t_size;
+                if (info[i].contains("Index")) {
+                    if (info[i].split(":")[0].contains("Boot"))
                         continue;
                     t_index = info[i].split(":")[1];
                     index.add(t_index);
                 }
-                if(info[i].contains("Name"))
-                {
+                if (info[i].contains("Name")) {
                     t_name = info[i].split(":")[1];
                     name.add(t_name);
+                }
+                if(info[i].contains("Total Bytes"))
+                {
+                    t_size = info[i].split(":")[1];
+                    Toast.makeText(getApplication(), t_size, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplication(), t_size.trim(), Toast.LENGTH_LONG).show();
+                    image_size.add(new BigInteger(t_size.trim()));
                 }
             }
             int num = index.size();
             listviewdata = new String[num];
-            for(int i=0;i<num;i++){
-                HashMap<String, Object> pMap=new HashMap<String,Object>();
+            for (int i = 0; i < num; i++) {
+                HashMap<String, Object> pMap = new HashMap<String, Object>();
                 pMap.put("name", name.get(i));
                 pMap.put("picture", R.drawable.win10);
                 listems.add(pMap);
                 //listviewdata[i] = index.get(i)+"——"+name.get(i);
             }
-            SimpleAdapter adapter=new SimpleAdapter(this,listems,R.layout.listview_item, new String[]{"picture","name"}, new int[]{R.id.itemImage,R.id.itemText});
-            //ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_list_item_1,listviewdata);
-            //int [] resIds={R.drawable.win10,R.drawable.win8,R.drawable.win7};
-            //listview.setAdapter(new ListViewAdapter(listviewdata,resIds));
-
-            listview.setAdapter(adapter);
-            listview.setBackgroundColor(Color.LTGRAY);
-            listview.setSelected(true);
-            listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-                    chooseid = String.valueOf(position+1);
-                    Toast.makeText(getApplication(), chooseid, Toast.LENGTH_LONG).show();
-                }
-            });
-        } else {
-            //弹出下载对话框
-            /*str = "没有相关ESD文件，请点击下方的自动下载按钮！！";
-            listview.setVisibility(View.GONE);
-            tip.setVisibility(View.GONE);
-            wiminfo.setTextColor(Color.RED);
-            wiminfo.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            //bt.setEnabled(false);
-//            chooselayout.setVisibility(View.GONE);
-            wiminfo.setText(str);*/
         }
+        listview.setVisibility(View.VISIBLE);
+        set_listview();
 
     }
-    public void dialog() {
-        //chooseimageid = (EditText) findViewById(R.id.chooseimageid);
+
+    public void set_listview(){
+        SimpleAdapter adapter = new SimpleAdapter(this, listems, R.layout.listview_item, new String[]{"picture", "name"}, new int[]{R.id.itemImage, R.id.itemText});
+
+        listview.setAdapter(adapter);
+        listview.setBackgroundColor(Color.LTGRAY);
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+                if (pos_sys != -1) {
+                    View v = parent.getChildAt(pos_sys);
+                    v.setBackgroundColor(Color.LTGRAY);
+                }
+                pos_sys = position;
+
+                chooseid = String.valueOf(position + 1);
+                TextView tv = (TextView) view.findViewById(R.id.itemText);
+                tv.setTextColor(Color.WHITE);
+                view.setBackgroundResource(R.color.blue);
+                //Toast.makeText(getApplication(), chooseid, Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+    public void download_dialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        //final String src = chooseimageid.getText().toString();
-        //create_wim.setEnabled(true);
-        builder.setTitle("警告");
-        builder.setMessage("点击'确认'按钮，恢复系统默认安装在Windows系统盘，原有系统数据将会丢失");
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        builder.setTitle("提示");
+        builder.setMessage("没有找到系统恢复文件，请点击\"下载\"按钮开始下载官方文件！");
+        builder.setPositiveButton("下载", new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                decompress();
-                //create_wim.setEnabled(false);
+                download();
 
             }
         });
@@ -257,27 +369,93 @@ public class MainActivity extends Activity   {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                //chooseimageid.setEnabled(true);
             }
         });
         builder.create();
         builder.show();
     }
-    private void checkintergrity(){
-        checkprogressDialog = new ProgressDialog(MainActivity.this);
 
-        //Toast.makeText(getApplication(), "", Toast.LENGTH_LONG).show();
-        //create_wim.setEnabled(false);
-        //download.setEnabled(true);
-        //chooseimageid.setEnabled(false);
-        if(checkIntegrity == null)
-        {
+    public void download() {
+        if (isNetworkAvailable()) {
+            // TODO Auto-generated method stub
+            downloadprogressDialog = new ProgressDialog(MainActivity.this);
+            downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+            if (mUpdateUIThread == null) {
+                mUpdateUIThread = newmyThread();
+                mUpdateUIThread.start();
+            } else {
+                mUpdateUIThread = null;
+                mUpdateUIThread = newmyThread();
+                mUpdateUIThread.start();
+            }
+
+        } else {
+            Toast.makeText(getApplication(), "网络未连接", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+    public boolean isNetworkAvailable() {
+        Context context = getApplicationContext();
+        // 获取手机所有连接管理对象（包括对wi-fi,net等连接的管理）
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        //ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            Toast.makeText(context, "网络异常", Toast.LENGTH_LONG).show();
+            return false;
+        } else {
+            // 获取NetworkInfo对象
+            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+            if (networkInfo != null) {
+                // 判断当前网络状态是否为连接状态
+                if (networkInfo.getState() == NetworkInfo.State.CONNECTED) {
+                    return true;
+                } else {
+                    Toast.makeText(context, "网络未连接", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+
+            }
+        }
+        return false;
+    }
+
+    public void dialog() {
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("警告");
+        builder.setMessage("点击'确认'按钮，恢复系统默认安装在Windows系统盘，原有系统数据将会丢失");
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // TODO Auto-generated method stub
+                decompress();
+
+            }
+        });
+        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // TODO Auto-generated method stub
+            }
+        });
+        builder.create();
+        builder.show();
+    }
+
+    private void checkintergrity() {
+        checkprogressDialog = new ProgressDialog(MainActivity.this);
+        if (checkIntegrity == null) {
             checkIntegrity = newcheckThread();
             checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
             checkprogressDialog.setCancelable(false);
             checkprogressDialog.show();
             checkIntegrity.start();
-        }else {
+        } else {
             checkIntegrity = null;
             checkIntegrity = newcheckThread();
             checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
@@ -287,11 +465,17 @@ public class MainActivity extends Activity   {
         }
     }
 
+    public updateUIThread newmyThread() {
+        mUpdateUIThread = new updateUIThread(handler, url, FileUtil.setMkdir(this) + File.separator, "test.wim");
+        return mUpdateUIThread;
+    }
+
     public CheckIntegrity newcheckThread() {
-        Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
-        checkIntegrity = new CheckIntegrity(handler,wimfile,sha1_stardard);
+        //Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
+        checkIntegrity = new CheckIntegrity(handler, wimfile, sha1_stardard);
         return checkIntegrity;
     }
+
     private void getConfig() {
         FileUtil.setMkdir(getApplicationContext());
         String configname = "/storage/emulated/legacy/tsing_recovery/recovery.config";
@@ -305,7 +489,7 @@ public class MainActivity extends Activity   {
                 sha1_stardard = "f32dffc2186e7b4b247efb3409e4065bb2fb4a20";
                 wimfile = "/storage/emulated/legacy/tsing_recovery/window.wim";
                 url = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
-                config.append(sha1_stardard+"\n");
+                config.append(sha1_stardard + "\n");
                 config.append(wimfile + "\n");
                 config.append(url);
                 fw = new FileWriter(file);//
@@ -412,16 +596,25 @@ public class MainActivity extends Activity   {
             return "操作异常";
         }
     }
-    private void section_select(){
+
+    private void section_select() {
+
         String section_cmd = "fdisk -l /dev/block/sda";
         String info = exec(section_cmd);
         String[] section_info = info.split("\n");
+
         section_detail = new ArrayList<>();
-        for(int i=0;i<section_info.length;i++){
-            if(section_info[i].contains("Number") && section_info[i].contains("Start") && section_info[i].contains("End")){
-                for(int j=i+1;j<section_info.length;j++){
+        disk_size = new ArrayList<>();
+
+        for (int i = 0; i < section_info.length; i++) {
+            BigInteger begin,end;
+            if (section_info[i].contains("Number") && section_info[i].contains("Start") && section_info[i].contains("End")) {
+                for (int j = i + 1; j < section_info.length; j++) {
                     String[] temp = section_info[j].split("\\s+");
-                    section_detail.add(temp[1]+"  "+temp[4]);
+                    section_detail.add(temp[1] + "  " + temp[4]);
+                    begin = new BigInteger(temp[2]);
+                    end = new BigInteger(temp[3]);
+                    disk_size.add(end.subtract(begin).pow(512));
                 }
                 break;
             }
@@ -430,9 +623,9 @@ public class MainActivity extends Activity   {
         //section_select.setTitle("请选择分区");
 
 
-        int num  = section_detail.size();
+        int num = section_detail.size();
         data = new String[num];
-        for(int i=0;i<num;i++) {
+        for (int i = 0; i < num; i++) {
             switch (i) {
                 case 0:
                     data[i] = section_detail.get(i) + "  " + "MSR分区";
@@ -449,18 +642,59 @@ public class MainActivity extends Activity   {
 
         }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this,android.R.layout.simple_list_item_1,data);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, R.layout.listview_item1, data);
 
         listview_section.setAdapter(adapter);
-        listview_section.setBackgroundColor(Color.GREEN);
+        listview_section.setBackgroundColor(Color.LTGRAY);
         listview_section.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                choose_section = String.valueOf(position + 1);
-                Toast.makeText(getApplication(), choose_section, Toast.LENGTH_LONG).show();
+                if(position != 0 && position !=1 &&position !=2) {
+                    if (disk_size.get(position).compareTo(image_size.get(Integer.valueOf(chooseid) - 1)) > 0) {
+                        if (pos != -1) {
+                            View v = parent.getChildAt(pos);
+                            v.setBackgroundColor(Color.LTGRAY);
+                        }
+                        pos = position;
+                        choose_section = String.valueOf(position + 1);
+                        TextView tv = (TextView) view.findViewById(R.id.itemText1);
+                        tv.setTextColor(Color.WHITE);
+                        view.setBackgroundResource(R.color.blue);
+
+                    }else {
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setTitle("警告");
+                        builder.setMessage("该分区磁盘空间不足，请选择其他分区");
+                        builder.setNeutralButton("确认", new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // TODO Auto-generated method stub
+
+                            }
+                        });
+                        builder.create();
+                        builder.show();
+                    }
+                }else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("警告");
+                    builder.setMessage("该分区为系统自带分区，请选择序号3以后的分区");
+                    builder.setNeutralButton("确认", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+
+                        }
+                    });
+                    builder.create();
+                    builder.show();
+                }
             }
         });
     }
+
     class MyTask extends AsyncTask<String, String, String> {
         //onPreExecute方法用于在执行后台任务前做一些UI操作
         @Override
@@ -519,7 +753,7 @@ public class MainActivity extends Activity   {
                             }
                         }
                         return "系统恢复成功";
-                    }catch(IOException e){
+                    } catch (IOException e) {
                         e.printStackTrace();
 
                         return "操作异常";
@@ -528,9 +762,7 @@ public class MainActivity extends Activity   {
                 }
 
 
-
-            }
-            else{
+            } else {
                 System.out.println("退出");
                 return "请输入正确的命令";
             }
@@ -549,9 +781,9 @@ public class MainActivity extends Activity   {
         protected void onPostExecute(String result) {
             //Toast.makeText(getApplication(), result, Toast.LENGTH_LONG).show();
             recoveryprogressDialog.dismiss();
-            if(result.equals("系统恢复成功"))
+            if (result.equals("系统恢复成功"))
                 reboot();
-            if(result.equals("false"))
+            if (result.equals("false"))
                 isRight = false;
         }
 
@@ -560,15 +792,16 @@ public class MainActivity extends Activity   {
         protected void onCancelled() {
         }
     }
+
     public void decompress() {
 
 
-        String dir = "/dev/block/sda"+choose_section;
+        String dir = "/dev/block/sda" + choose_section;
 
         String cmd1 = "mkntfs -f " + dir;
         String cmd2 = "wimlib-imagex apply " + wimfile + " " + chooseid + " " + dir;
-        Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
-        Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();
+        /*Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();*/
         MyTask myTask = new MyTask();
         myTask.execute(cmd1, cmd2);
     }
@@ -599,80 +832,52 @@ public class MainActivity extends Activity   {
         builder.create();
         builder.show();
     }
+
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case FileUtil.startDownloadMeg:
-
-                    //progressBar.setMax(mUpdateUIThread.getFileSize());   //开始
-                    /*downloadprogressDialog.setMax(mUpdateUIThread.getFileSize());
+                    downloadprogressDialog.setMax(mUpdateUIThread.getFileSize());
                     downloadprogressDialog.setMessage("正在下载，请耐心等待……");
                     downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                     downloadprogressDialog.show();
                     downloadprogressDialog.setCancelable(false);
-                    downloadprogressDialog.onStart();*/
+                    downloadprogressDialog.onStart();
                     break;
                 case FileUtil.updateDownloadMeg:
-                    /*if (!mUpdateUIThread.isCompleted())   //下载
+                    if (!mUpdateUIThread.isCompleted())   //下载
                     {
-                        //Log.e(TAG, "已下载：" + mUpdateUIThread.getDownloadSize());
-                        //progressBar.setProgress(mUpdateUIThread.getDownloadSize());
                         downloadprogressDialog.setProgress(mUpdateUIThread.getDownloadSize());
-                        //.setText("下载速度：" + mUpdateUIThread.getDownloadSpeed() + "k/秒"*//*       下载百分比" + mUpdateUIThread.getDownloadPercent() + "%"*//*);
                     } else {
-                        //info.setText("下载完成");
-                    }*/
+                    }
                     break;
                 case FileUtil.endDownloadMeg:
-                    /*Toast.makeText(RecoveryActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
-                    downloadprogressDialog.dismiss();*/
-				/*apk安装界面跳转*/
-                   /* String filename = FileUtil.getFileName(url);
-                    String str = "/tsing_recovery/" + filename;
-                    String fileName = Environment.getExternalStorageDirectory() + str;
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(Uri.fromFile(new File(fileName)), "application/vnd.android.package-archive");
-                    startActivity(intent);*//*
-                    //exec("mv /storage/emulated/legacy/tsing_recovery/" + filename + " /system/test/test.wim");*/
-                    //info.setText("下载完成");
-                    //.setProgress(0);
-                    //create_wim.setEnabled(true);
-
-                    //.setEnabled(true);
-                    /*cancel_download.setEnabled(false);*/
+                    Toast.makeText(MainActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
+                    downloadprogressDialog.dismiss();
+                    /*apk安装界面跳转*/
+                    //跳转到选择系统界面
                     break;
                 case FileUtil.cancleDownloadMeg:
-                    /*Toast.makeText(RecoveryActivity.this, "取消下载", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "取消下载", Toast.LENGTH_SHORT).show();
                     exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
-                    //info.setText("下载取消");
-                    //progressBar.setProgress(0);
-                    //create_wim.setEnabled(true);
-                    download.setEnabled(true);
-                    cancel_download.setEnabled(false);
-                    downloadprogressDialog.dismiss();*/
+                    downloadprogressDialog.dismiss();
 
                     break;
                 case FileUtil.timeout:
-                    /*Toast.makeText(RecoveryActivity.this, "连接超时，请检查网络或者站点是否正常", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(MainActivity.this, "连接超时，请检查网络或者站点是否正常", Toast.LENGTH_SHORT).show();
                     exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
-                    //.setText("连接超时");
-                    //progressBar.setProgress(0);
-                    //create_wim.setEnabled(true);
-                    download.setEnabled(true);
-                    cancel_download.setEnabled(false);*/
                     break;
                 case FileUtil.fileNotExist:
                     Toast.makeText(getApplication(), "文件不存在", Toast.LENGTH_LONG).show();
                     checkprogressDialog.dismiss();
-                    //create_wim.setEnabled(true);
-                    //download.setEnabled(true);
                     break;
                 case FileUtil.fileRight:
                     Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
                     checkprogressDialog.dismiss();
 
                     //listview.setVisibility(View.GONE);
+                    back_system.setVisibility(View.VISIBLE);
                     listview.setVisibility(View.GONE);
                     listview_section.setVisibility(View.VISIBLE);
                     system.setVisibility(View.GONE);
@@ -692,51 +897,98 @@ public class MainActivity extends Activity   {
         }
     };
 
-    public class ListViewAdapter extends BaseAdapter {
-        View [] itemViews;
+    /*public class ListAdapter extends BaseAdapter {
 
-        public ListViewAdapter( String [] itemTexts,
-                               int [] itemImageRes){
+        ArrayList<ButtonView> arrayList = null;
+        LayoutInflater inflater;
+        View view;
+        ButtonLayoutHolder buttonLayoutHolder;
+        LinearLayout buttonLayout = null;
+        TextView buttonText = null;
+        ImageView buttonImage = null;
 
-            for (int i=0; i<itemViews.length; ++i){
-                itemViews[i] = makeItemView( itemTexts[i],
-                        itemImageRes[i]);
-            }
+        private int selectedPosition = -1;// 选中的位置
+
+        public ListAdapter(ArrayList<ButtonView> buttonListView) {
+            // TODO Auto-generated constructor stub
+            arrayList = buttonListView;
         }
 
-        public int getCount()   {
-            return itemViews.length;
+        @Override
+        public int getCount() {
+            // TODO Auto-generated method stub
+            return arrayList.size();
         }
 
-        public View getItem(int position)   {
-            return itemViews[position];
+        @Override
+        public Object getItem(int position) {
+            // TODO Auto-generated method stub
+            return arrayList.get(position);
         }
 
+        @Override
         public long getItemId(int position) {
+            // TODO Auto-generated method stub
             return position;
         }
 
-        private View makeItemView( String strText, int resId) {
-            LayoutInflater inflater = (LayoutInflater)MainActivity.this
-                    .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-
-            // 使用View的对象itemView与R.layout.item关联
-            View itemView = inflater.inflate(R.layout.listview_item, null);
-
-            // 通过findViewById()方法实例R.layout.item内各组件
-
-            TextView text = (TextView)itemView.findViewById(R.id.itemText);
-            text.setText(strText);
-            ImageView image = (ImageView)itemView.findViewById(R.id.itemImage);
-            image.setImageResource(resId);
-
-            return itemView;
+        public void setSelectedPosition(int position) {
+            selectedPosition = position;
         }
 
+        @Override
         public View getView(int position, View convertView, ViewGroup parent) {
-            if (convertView == null)
-                return itemViews[position];
-            return convertView;
+            // TODO Auto-generated method stub
+            inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+            view = inflater.inflate(R.layout.listview_item, null, false);
+            buttonLayoutHolder = (ButtonLayoutHolder) view.getTag();
+
+            if (buttonLayoutHolder == null) {
+                buttonLayoutHolder = new ButtonLayoutHolder();
+                buttonLayoutHolder.buttonLayout = (LinearLayout) view
+                        .findViewById(R.id.LinearLayout);
+                buttonLayoutHolder.textView = (TextView) view
+                        .findViewById(R.id.itemText);
+                buttonLayoutHolder.imageView = (ImageView) view
+                        .findViewById(R.id.itemImage);
+                view.setTag(buttonLayoutHolder);
+            }
+            buttonLayout = buttonLayoutHolder.buttonLayout;
+            buttonText = buttonLayoutHolder.textView;
+            buttonImage = buttonLayoutHolder.imageView;
+            if (selectedPosition == position) {
+                buttonText.setSelected(true);
+                buttonText.setPressed(true);
+                buttonLayout.setBackgroundColor(Color.RED);
+            } else {
+                buttonText.setSelected(false);
+                buttonText.setPressed(false);
+                buttonLayout.setBackgroundColor(Color.TRANSPARENT);
+
+            }
+
+            buttonText.setTextColor(Color.WHITE);
+            buttonText.setText(arrayList.get(position).textViewId);
+
+            return view;
+
+        }
+
+    }
+
+    ;
+
+    class ButtonView {
+        int textViewId;
+
+        ButtonView(int tId) {
+            textViewId = tId;
         }
     }
+
+    class ButtonLayoutHolder {
+        LinearLayout buttonLayout;
+        TextView textView;
+        ImageView imageView;
+    }*/
 }

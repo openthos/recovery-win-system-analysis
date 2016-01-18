@@ -13,9 +13,18 @@
     2.下载地址：自定义输入ESD文件的下载网址；
     3.命令行：执行shell命令
     点击“保存”按钮后，存储在配置文件</string>
-    <string name="welcome" >欢迎使用清华同方恢复系统！
-    您可以通过使用本软件，将系统恢复至出厂设置状态！</string>
-    <string name="introduction">您可以通过使用本软件，将系统恢复至出厂设置状态！</string>
+    <string name="introduction1" >一、使用方法\n</string>
+    <string name="introduction11">1.应用范围</string>
+    <string name="introduction111">\t该工具会在扬天、启天以及NEW THINKCENTRE机型且预装WINDOWS XP以及WINDOWS7、WINDOWS8、WINDOWS8.1、WINDOWS10非Edu机型中带有。</string>
+    <string name="introduction12">2.能否备份WIN10系统?</string>
+    <string name="introduction121">\t1.0版本不支持，仅支持WIN7以及以下版本。
+    \t1.1版本开始支持UEFI引导的GPT分区的WIN8、WIN8.1和WIN10。</string>
+    <string name="introduction13">3.对u盘有没有特殊要求？</string>
+    <string name="introduction131">\tU盘性能对软件体验影响较大，优先推荐USB3.0设备。从之前的测试结果来看，越高端的U盘，性能和效果越好，备份速度块，启动快。
+        另外，对大小也有要求。软件会根据备份大小计算一个合理的数值，移动设备必须大于该数值才可以使用。</string>
+    <string name="introduction2" >二、备份机制\n</string>
+    <string name="introduction21" >\tWIM是英文Microsoft Windows Imaging Format(WIM)的简称，它是Windows基于文件的映像格式。WIM 映像格式还允许在一个实际文件中存储多个映像。
+        WIM 映像格式还启用了压缩和单一实例，从而可大大减小映像文件的大小。WIM虽然采用类似Ghost的方式进行系统安装，却比Ghost更灵活，它允许我们在把镜像文件恢复到硬盘之前，选择恢复分区，并进行其他简单的配置。</string>
     <string name="title_activity_recovery">RecoveryActivity</string>
     <string name="wechat">tongfang</string>
     <string name="tip">请选择您要恢复的系统！</string>
