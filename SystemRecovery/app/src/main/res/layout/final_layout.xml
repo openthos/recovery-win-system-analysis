@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/darkgray"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:id="@+id/images"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:autoText="false"
+            android:text="系统镜像" />
+
+        <ImageButton
+            android:id="@+id/offline"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:src="@drawable/disk" />
+
+        <ImageButton
+            android:id="@+id/online"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:src="@drawable/online" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="帮助信息"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/line1"
+        android:layout_width="1dp"
+        android:layout_height="fill_parent"
+        android:background="#010101" />
+
+    <LinearLayout
+        android:id="@+id/targetdisk"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:autoText="false"
+            android:text="目标分区" />
+
+        <ListView
+            android:id="@+id/listView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/recovery"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="开始部署" />
+    </LinearLayout>
+</LinearLayout>

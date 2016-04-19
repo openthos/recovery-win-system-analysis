@@ -16,11 +16,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -70,6 +70,7 @@ public class MainActivity extends Activity {
 
 
     private String wimfile;
+    private String wimfile_online = "/storage/emulated/legacy/tsing_recovery/system_from_online.wim";
 
     private File file;
 
@@ -92,12 +93,12 @@ public class MainActivity extends Activity {
     private SimpleAdapter listItemAdapter;
     private ArrayList<HashMap<String, Object>> listItems;
 
-    private int pos=-1;
-    private int pos_sys=-1;
+    private int pos = -1;
+    private int pos_sys = -1;
 
 
-    private String chooseid="";
-    private String choose_section="";
+    private String chooseid = "";
+    private String choose_section = "";
     private String url;
 
     private CheckIntegrity checkIntegrity = null;
@@ -110,7 +111,9 @@ public class MainActivity extends Activity {
     ProgressDialog downloadprogressDialog;
     private TextView wechat;
     private TextView wechataccount;
-
+    private ImageButton offline;
+    private ImageButton online;
+    private Button recovery;
 
 
     @SuppressLint("NewApi")
@@ -118,10 +121,74 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         //setTheme(R.style.Theme_MyCustomTheme);
         super.onCreate(savedInstanceState);
+        //2016.4.13
+        getConfig();
+        setContentView(R.layout.final_layout);
+        offline = (ImageButton) findViewById(R.id.offline);
+        online = (ImageButton) findViewById(R.id.online);
+        recovery = (Button) findViewById(R.id.recovery);
+        listview_section = (ListView) findViewById(R.id.listView2);
+        recovery.setVisibility(View.GONE);
+        listview_section.setVisibility(View.GONE);
+        View.OnClickListener offlinelistener = new View.OnClickListener() {
 
+            @Override
+            public void onClick(View v) {
 
-        //requestWindowFeature(Window.FEATURE_CUSTOM_TITLE);
-        setContentView(R.layout.activity_main);
+                // TODO Auto-generated method stub
+                if (fileIsExists(wimfile)) {
+                    //setWiminfo();
+                    checkintergrity();
+
+                } else {
+                    //弹出下载对话框
+                    Toast.makeText(getApplication(), "您的电脑磁盘没找到系统布置文件，请使用网络云盘", Toast.LENGTH_LONG).show();
+                }
+            }
+        };
+        offline.setOnClickListener(offlinelistener);
+
+        View.OnClickListener onlinelistener = new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                // TODO Auto-generated method stub
+                if (fileIsExists(wimfile_online)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("提示");
+                    builder.setMessage("云盘系统部署工具已经存在，是否重新下载！");
+                    builder.setNeutralButton("确定", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+                            exec("rm /storage/emulated/legacy/tsing_recovery/system_from_online.wim");
+                            download_dialog();
+                        }
+                    });
+                    builder.create();
+                    builder.show();
+
+                } else {
+                    //弹出下载对话框
+                    download_dialog();
+                }
+            }
+        };
+        online.setOnClickListener(onlinelistener);
+
+        View.OnClickListener recoverylistener = new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+
+                // TODO Auto-generated method stub
+                dialog();
+            }
+        };
+        recovery.setOnClickListener(recoverylistener);
+        /*//setContentView(R.layout.activity_main);
 
         //打开APP的界面，“继续”按钮
         begin = (Button) findViewById(R.id.begin);
@@ -151,8 +218,8 @@ public class MainActivity extends Activity {
             public void onClick(View v) {
 
                 // TODO Auto-generated method stub
-                /*Intent intent = new Intent(MainActivity.this,RecoveryActivity.class);
-                startActivity(intent);*/
+                *//*Intent intent = new Intent(MainActivity.this,RecoveryActivity.class);
+                startActivity(intent);*//*
                 if (fileIsExists(wimfile)) {
                     setWiminfo();
                     begin.setVisibility(View.GONE);
@@ -272,7 +339,7 @@ public class MainActivity extends Activity {
 
             }
         };
-        back_system.setOnClickListener(back_systemlistener);
+        back_system.setOnClickListener(back_systemlistener);*/
         getConfig();
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -305,8 +372,7 @@ public class MainActivity extends Activity {
                     t_name = info[i].split(":")[1];
                     name.add(t_name);
                 }
-                if(info[i].contains("Total Bytes"))
-                {
+                if (info[i].contains("Total Bytes")) {
                     t_size = info[i].split(":")[1];
                     Toast.makeText(getApplication(), t_size, Toast.LENGTH_LONG).show();
                     Toast.makeText(getApplication(), t_size.trim(), Toast.LENGTH_LONG).show();
@@ -328,7 +394,7 @@ public class MainActivity extends Activity {
 
     }
 
-    public void set_listview(){
+    public void set_listview() {
         SimpleAdapter adapter = new SimpleAdapter(this, listems, R.layout.listview_item, new String[]{"picture", "name"}, new int[]{R.id.itemImage, R.id.itemText});
 
         listview.setAdapter(adapter);
@@ -351,6 +417,7 @@ public class MainActivity extends Activity {
             }
         });
     }
+
     public void download_dialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("提示");
@@ -466,7 +533,7 @@ public class MainActivity extends Activity {
     }
 
     public updateUIThread newmyThread() {
-        mUpdateUIThread = new updateUIThread(handler, url, FileUtil.setMkdir(this) + File.separator, "test.wim");
+        mUpdateUIThread = new updateUIThread(handler, url, FileUtil.setMkdir(this) + File.separator, "system_from_online.wim");
         return mUpdateUIThread;
     }
 
@@ -607,7 +674,7 @@ public class MainActivity extends Activity {
         disk_size = new ArrayList<>();
 
         for (int i = 0; i < section_info.length; i++) {
-            BigInteger begin,end;
+            BigInteger begin, end;
             if (section_info[i].contains("Number") && section_info[i].contains("Start") && section_info[i].contains("End")) {
                 for (int j = i + 1; j < section_info.length; j++) {
                     String[] temp = section_info[j].split("\\s+");
@@ -649,7 +716,7 @@ public class MainActivity extends Activity {
         listview_section.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(position != 0 && position !=1 &&position !=2) {
+                if (position != 0 && position != 1 && position != 2) {
                     if (disk_size.get(position).compareTo(image_size.get(Integer.valueOf(chooseid) - 1)) > 0) {
                         if (pos != -1) {
                             View v = parent.getChildAt(pos);
@@ -661,7 +728,7 @@ public class MainActivity extends Activity {
                         tv.setTextColor(Color.WHITE);
                         view.setBackgroundResource(R.color.blue);
 
-                    }else {
+                    } else {
                         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                         builder.setTitle("警告");
                         builder.setMessage("该分区磁盘空间不足，请选择其他分区");
@@ -676,7 +743,7 @@ public class MainActivity extends Activity {
                         builder.create();
                         builder.show();
                     }
-                }else {
+                } else {
                     final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                     builder.setTitle("警告");
                     builder.setMessage("该分区为系统自带分区，请选择序号3以后的分区");
@@ -799,7 +866,7 @@ public class MainActivity extends Activity {
         String dir = "/dev/block/sda" + choose_section;
 
         String cmd1 = "mkntfs -f " + dir;
-        String cmd2 = "wimlib-imagex apply " + wimfile + " " + chooseid + " " + dir;
+        String cmd2 = "wimlib-imagex apply " + wimfile + " " + dir;
         /*Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
         Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();*/
         MyTask myTask = new MyTask();
@@ -877,11 +944,14 @@ public class MainActivity extends Activity {
                     checkprogressDialog.dismiss();
 
                     //listview.setVisibility(View.GONE);
+                   /*2016.04.13
                     back_system.setVisibility(View.VISIBLE);
                     listview.setVisibility(View.GONE);
                     listview_section.setVisibility(View.VISIBLE);
                     system.setVisibility(View.GONE);
-                    partition.setVisibility(View.VISIBLE);
+                    partition.setVisibility(View.VISIBLE);*/
+                    recovery.setVisibility(View.VISIBLE);
+                    listview_section.setVisibility(View.VISIBLE);
                     section_select();
 
                     break;
