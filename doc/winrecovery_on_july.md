@@ -81,9 +81,9 @@
 
 # 设计实现
 
-[设计详情]()
+[设计详情](https://github.com/openthos/recovery-win-system/blob/master/%E8%AE%BE%E8%AE%A1%E6%96%87%E6%A1%A3.md)
 
-[测试过程参考](https://github.com/openthos/recovery-win-system/pull/8)
+[测试过程参考](https://github.com/openthos/recovery-win-system/blob/master/%E6%B5%8B%E8%AF%95%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3.md)
 
 
 # 存在问题
