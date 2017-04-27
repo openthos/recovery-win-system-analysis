@@ -34,7 +34,8 @@ public class MainTab extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.main_tab, container, false);
-        /*textView = (TextView) view.findViewById(R.layout.main_tab);
+        /*
+        textView = (TextView) view.findViewById(R.layout.main_tab);
         //linearLayout = (LinearLayout) view.findViewById(R.id.layout_info);
         imagecount = new StringBuffer();
         imageid = new StringBuffer();
@@ -64,10 +65,12 @@ public class MainTab extends Fragment {
             filefoldnum_tv.setText(filefoldnum.toString().split("|")[0]);
             size_tv = (TextView) view.findViewById(R.id.size);
             size_tv.setText(size.toString().split("|")[0]);
-        }*/
+        }
+        */
 
 
-        /*tableRow = new TableRow(());
+        /*
+        tableRow = new TableRow(());
         TextView image_id = new TextView(this.getContext());
         image_id.setText("hello");
         TextView file_num = new TextView(this.getContext());
@@ -134,7 +137,8 @@ public class MainTab extends Fragment {
             tableRow.addView(size_num);
 
             tableLayout.addView(tableRow);
-        }*/
+        }
+        */
         return view;
     }
 
@@ -145,7 +149,8 @@ public class MainTab extends Fragment {
 
     }
 
-    /*public boolean fileIsExists(String path) {
+    /*
+    public boolean fileIsExists(String path) {
         try {
             File f = new File(path);
             if (!f.exists()) {
@@ -157,9 +162,11 @@ public class MainTab extends Fragment {
             return false;
         }
         return true;
-    }*/
+    }
+    */
 
-    /*public void getInfo(StringBuffer imagecount, StringBuffer imageid, StringBuffer filenum, StringBuffer filefoldnum, StringBuffer size) {
+    /*
+    public void getInfo(StringBuffer imagecount, StringBuffer imageid, StringBuffer filenum, StringBuffer filefoldnum, StringBuffer size) {
         try {
             if (fileIsExists(Environment.getRootDirectory().getAbsolutePath() + File.separator+ "windows.wim")) {
                 Runtime rt = Runtime.getRuntime();
@@ -230,6 +237,7 @@ public class MainTab extends Fragment {
             e.printStackTrace();
         }
 
-    }*/
+    }
+    */
 }
 

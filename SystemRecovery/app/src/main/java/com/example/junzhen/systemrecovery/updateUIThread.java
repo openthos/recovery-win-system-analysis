@@ -99,7 +99,7 @@ public class updateUIThread extends Thread {
 
             while (!finished) {
 
-                downloadSize = 0;
+                 downloadSize = 0;
                 finished = true;
                 downloadSize += fdt.getDownloadSize();
                 if (!fdt.isFinished()) {

@@ -1,6 +1,6 @@
+/*
 package com.example.junzhen.systemrecovery;
 
-import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -9,19 +9,12 @@ import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
-import android.view.LayoutInflater;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,325 +27,300 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.NoSuchAlgorithmException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RecoveryActivity extends AppCompatActivity {
 
+
+    MainActivity mainActivity = new MainActivity();
+
+
+
     private static final int OUTPUT_BUFFER_SIZE = 1024;
-    private int imagecount;
-    private String sha1_stardard;
-    //private Button create_wim;
-    private Button cancle_wim;
-    private Button cancel_download;
-    private EditText source;
-    //private TextView info;
-    //private ProgressBar progressBar;
-    private Button download;
-
-    private Button save;
-    private Button cancel;
-    private Button bt;
-    private EditText chooseimageid;
-
-    //private  String src;
-    public int downLoadFileSize;
-    public int fileSize;
-    private TextView wiminfo;
-    private ListView listview;
-    private String[] listviewdata;
-    private String chooseid;
-    private String choose_section;
-    private TextView tip;
-    private ListView section_list;
 
 
-    private String[] data;;
-    private Button cancle_bt;
-    private LinearLayout chooselayout;
-    //private TextView wancheng;
+    */
+/**
+     * 底部四个按钮
+     *//*
+
+    */
+/**
+     * 用于对Fragment进行管理
+     *//*
+
+    public String wimfile7,wimfile10;
+    private String fromonline_win7_home = "/storage/emulated/legacy/tsing_recovery/online_win7_home.wim";
+    private String fromonline_win7_professional = "/storage/emulated/legacy/tsing_recovery/online_win7_professional.wim";
+    private String fromonline_win7_business = "/storage/emulated/legacy/tsing_recovery/online_win7_business.wim";
+    private String fromonline_win8 = "/storage/emulated/legacy/tsing_recovery/online_win8.wim";
+    private String fromonline_win10 = "/storage/emulated/legacy/tsing_recovery/online_win10.wim";
+
+
+
     private File file;
-    private Button help;
-
-    List<String> index;
-    List<String> name;
+    List<BigInteger> image_size;
+    List<BigInteger> disk_size;
     List<String> section_detail;
-    ProgressDialog downloadprogressDialog;
-    ProgressDialog recoveryprogressDialog;
-    ProgressDialog checkprogressDialog;
 
-    private updateUIThread mUpdateUIThread = null;
-    private CheckIntegrity checkIntegrity = null;
-    //private FileDownloadThread fdt = null;
-    /*private String url = "http://cdimage.ubuntu.com/ubuntukylin/releases/14.04.2/release/ubuntukylin-14.04.2-desktop-amd64.iso";*/
-    private String url;
-    private String wimfile;
-    private String target;
     private boolean isRight = false;
-    private boolean remove = false;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_recovery);
-        /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);*/
+    private String[] data;
 
-        //info = (TextView) findViewById(R.id.return_info);
-        //info.setTextSize(20);
 
-        //create_wim = (Button) findViewById(R.id.creat_wim);
-       // progressBar = (ProgressBar) findViewById(R.id.progress);
-        download = (Button) findViewById(R.id.dowmload);
-       /* save = (Button) findViewById(R.id.save);
-        cancel = (Button) findViewById(R.id.cancel);*/
-        cancel_download = (Button) findViewById(R.id.cancel_wim);
-        cancel_download.setEnabled(false);
-        //chooseimageid = (EditText) findViewById(R.id.chooseimageid);
-        //wancheng = (TextView) findViewById(R.id.wancheng);
-        help = (Button) findViewById(R.id.help);
-        tip = (TextView) findViewById(R.id.tip);
+    private int pos = -1;
 
-        View.OnClickListener helplistener = new View.OnClickListener() {
+    private String chooseid = "";
+    private String choose_section = "";
+    private  String url_win7_home,url_win7_professional,url_win7_business,url_win8,url_win10;
+
+    private CheckIntegrity checkIntegrity = null;
+    private updateUIThread mUpdateUIThread = null;
+
+    private String win7_sha1_stardard,win10_sha1_stardard;
+
+    ProgressDialog checkprogressDialog;
+    ProgressDialog recoveryprogressDialog;
+    ProgressDialog downloadprogressDialog;
+    public int i,j;
+
+
+    public void download_dialog() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
+        builder.setTitle("提示");
+        builder.setMessage("没有找到系统恢复文件，请点击\"下载\"按钮开始下载官方文件！");
+        builder.setPositiveButton("下载", new DialogInterface.OnClickListener() {
 
             @Override
-            public void onClick(View v) {
-
+            public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                helpdialog();
+
+                download();
 
             }
-        };
-       /* View.OnClickListener createlistener = new View.OnClickListener() {
+        });
+        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
 
             @Override
-            public void onClick(View v) {
-
+            public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                getConfig();
-                Toast.makeText(getApplication(), "检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………", Toast.LENGTH_LONG).show();
-                create_wim.setEnabled(false);
-                download.setEnabled(false);
-                //chooseimageid.setEnabled(false);
-                if(checkIntegrity == null)
-                {
-                    checkIntegrity = newcheckThread();
-                    checkIntegrity.start();
-                }else {
-                    checkIntegrity = null;
-                    checkIntegrity = newcheckThread();
-                    checkIntegrity.start();
-                }
-                *//*MyTask task = new MyTask();
-                task.execute("check");*//*
-                *//*try {
-                    task.wait();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*//*
-
-                //typeselect();
             }
-        };*/
-        final View.OnClickListener downloadlistener = new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                if (isNetworkAvailable()) {
-                    // TODO Auto-generated method stub
-                    downloadprogressDialog = new ProgressDialog(RecoveryActivity.this);
-                    downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-
-                    getConfig();
-                    if (!fileIsExists(wimfile)) {
-                        if (mUpdateUIThread == null) {
-                            mUpdateUIThread = newmyThread();
-                            mUpdateUIThread.start();
-                        } else {
-                            mUpdateUIThread = null;
-                            mUpdateUIThread = newmyThread();
-                            mUpdateUIThread.start();
-                        }
-                        //create_wim.setEnabled(false);
-                        download.setEnabled(false);
-                        cancel_download.setEnabled(true);
-                    }else {
-                        if(removefile()){
-                            if (mUpdateUIThread == null) {
-                                mUpdateUIThread = newmyThread();
-                                mUpdateUIThread.start();
-                            } else {
-                                mUpdateUIThread = null;
-                                mUpdateUIThread = newmyThread();
-                                mUpdateUIThread.start();
-                            }
-                            //create_wim.setEnabled(false);
-                            download.setEnabled(false);
-                            cancel_download.setEnabled(true);
-                        }
-                    }
-                }else {
-                    Toast.makeText(getApplication(), "网络未连接", Toast.LENGTH_LONG).show();
-                }
-            }
-        };
-        View.OnClickListener canceldownloadlistener = new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-
-                // TODO Auto-generated method stub
-                if (mUpdateUIThread != null) {
-                    mUpdateUIThread.interrupt();
-                    //fdt.interrupt();
-                    //mUpdateUIThread = null;
-                }
-
-            }
-        };
-
-        help.setOnClickListener(helplistener);
-        download.setOnClickListener(downloadlistener);
-       // create_wim.setOnClickListener(createlistener);
-        cancel_download.setOnClickListener(canceldownloadlistener);
-        getConfig();
-        wiminfo = (TextView) findViewById(R.id.wiminfo);
-        listview = (ListView) findViewById(R.id.list_view);
-        //chooselayout = (LinearLayout) findViewById(R.id.chooselayout);
-        //String path = "/storage/emulated/legacy/tsing_recovery/windows.wim";
-        imagecount = 0;
-        index = new ArrayList<>();
-        name = new ArrayList<>();
-        setWiminfo();
-
-       /* FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-                                   @Override
-                                   public void onClick(View view) {
-                                       Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                                               .setAction("Action", null).show();
-                                       //Intent intent = new Intent(RecoveryActivity.this, MainActivity.class);
-                                       //startActivity(intent);
-
-                                   }
-                               }
-        );*/
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-    }
-
-    private void setWiminfo(){
-        String str;
-        if (fileIsExists(wimfile)) {
-            str = exec("wimlib-imagex info " + wimfile + "\n");
-            //str = exec("ls");
-            wiminfo.setVisibility(View.GONE);
-            //wiminfo.setTextColor(Color.BLACK);
-            //wiminfo.setText(str);
-            Toast.makeText(getApplication(), str, Toast.LENGTH_LONG).show();
-            String[] info = str.split("\n");
-
-            for(int i=0;i<info.length;i++)
-            {
-                String t_index;
-                String t_name;
-                if(info[i].contains("Index"))
-                {
-                    if(info[i].split(":")[0].contains("Boot"))
-                        continue;
-                    t_index = info[i].split(":")[1];
-                    index.add(t_index);
-                }
-                if(info[i].contains("Name"))
-                {
-                    t_name = info[i].split(":")[1];
-                    name.add(t_name);
-                }
-            }
-            int num = index.size();
-            listviewdata = new String[num];
-            for(int i=0;i<num;i++){
-                listviewdata[i] = index.get(i)+"——"+name.get(i);
-            }
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(RecoveryActivity.this,android.R.layout.simple_list_item_1,listviewdata);
-            listview.setAdapter(adapter);
-            listview.setBackgroundColor(Color.GREEN);
-            listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    chooseid = String.valueOf(position+1);
-                    checkprogressDialog = new ProgressDialog(RecoveryActivity.this);
-
-                    //Toast.makeText(getApplication(), "", Toast.LENGTH_LONG).show();
-                    //create_wim.setEnabled(false);
-                    download.setEnabled(true);
-                    //chooseimageid.setEnabled(false);
-                    if(checkIntegrity == null)
-                    {
-                        checkIntegrity = newcheckThread();
-                        checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
-                        checkprogressDialog.setCancelable(false);
-                        checkprogressDialog.show();
-                        checkIntegrity.start();
-                    }else {
-                        checkIntegrity = null;
-                        checkIntegrity = newcheckThread();
-                        checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
-                        checkprogressDialog.setCancelable(false);
-                        checkprogressDialog.show();
-                        checkIntegrity.start();
-                    }
-
-                }
-            });
-        } else {
-
-            str = "没有相关ESD文件，请点击下方的自动下载按钮！！";
-            listview.setVisibility(View.GONE);
-            tip.setVisibility(View.GONE);
-            wiminfo.setTextColor(Color.RED);
-            wiminfo.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
-            //bt.setEnabled(false);
-//            chooselayout.setVisibility(View.GONE);
-            wiminfo.setText(str);
-        }
-
-    }
-    private void helpdialog() {
-        Toast.makeText(getApplication(), name.get(0), Toast.LENGTH_LONG).show();
-        Toast.makeText(getApplication(), index.get(0), Toast.LENGTH_LONG).show();
-        final AlertDialog builder = new AlertDialog.Builder(RecoveryActivity.this).create();
-        builder.setTitle("帮助");
-        View view = LayoutInflater.from(getApplicationContext()).inflate(R.layout.help, null);
-
-        Button confirm = (Button) view.findViewById(R.id.confirm);
-        builder.setView(view);
+        });
+        builder.create();
         builder.show();
-        View.OnClickListener confirmlistener = new View.OnClickListener() {
+    }
+
+
+
+    public void download() {
+        if (isNetworkAvailable()) {
+            // TODO Auto-generated method stub
+            downloadprogressDialog = new ProgressDialog(RecoveryActivity.this);
+            downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+
+            if (mUpdateUIThread == null) {
+                mUpdateUIThread = newmyThread();
+                mUpdateUIThread.start();
+            } else {
+                mUpdateUIThread = null;
+                mUpdateUIThread = newmyThread();
+                mUpdateUIThread.start();
+            }
+
+        } else {
+            Toast.makeText(getApplication(), "网络未连接", Toast.LENGTH_LONG).show();
+        }
+    }
+
+
+
+    public boolean isNetworkAvailable() {
+        Context context = getApplicationContext();
+        // 获取手机所有连接管理对象（包括对wi-fi,net等连接的管理）
+        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        //ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        if (connectivityManager == null) {
+            Toast.makeText(context, "网络异常", Toast.LENGTH_LONG).show();
+            return false;
+        } else {
+            // 获取NetworkInfo对象
+            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+
+            if (networkInfo != null) {
+                // 判断当前网络状态是否为连接状态
+                if (networkInfo.getState() == NetworkInfo.State.CONNECTED) {
+                    return true;
+                } else {
+                    Toast.makeText(context, "网络未连接", Toast.LENGTH_LONG).show();
+                    return false;
+                }
+
+            }
+        }
+        return false;
+    }
+
+
+
+    public void dialog() {
+
+        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
+        builder.setTitle("警告");
+        builder.setMessage("点击'确认'按钮，恢复系统默认安装在Windows系统盘，原有系统数据将会丢失");
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
 
             @Override
-            public void onClick(View v) {
-
+            public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
+                decompress();
 
-                builder.dismiss();
             }
-        };
+        });
+        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
 
-        confirm.setOnClickListener(confirmlistener);
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // TODO Auto-generated method stub
+            }
+        });
+        builder.create();
+        builder.show();
     }
+
+
+
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case FileUtil.startDownloadMeg:
+                    downloadprogressDialog.setMax(mUpdateUIThread.getFileSize());
+                    downloadprogressDialog.setMessage("正在下载，请耐心等待……");
+                    downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                    downloadprogressDialog.show();
+                    downloadprogressDialog.setCancelable(false);
+                    downloadprogressDialog.onStart();
+                    break;
+                case FileUtil.updateDownloadMeg:
+                    if (!mUpdateUIThread.isCompleted())   //下载
+                    {
+                        downloadprogressDialog.setProgress(mUpdateUIThread.getDownloadSize());
+                    } else {
+                    }
+                    break;
+                case FileUtil.endDownloadMeg:
+                    Toast.makeText(RecoveryActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
+                    downloadprogressDialog.dismiss();
+                    */
+/*apk安装界面跳转*//*
+
+                    //跳转到选择系统界面
+                    break;
+                case FileUtil.cancleDownloadMeg:
+                    Toast.makeText(RecoveryActivity.this, "取消下载", Toast.LENGTH_SHORT).show();
+                    exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
+                    downloadprogressDialog.dismiss();
+
+                    break;
+                case FileUtil.timeout:
+                    Toast.makeText(RecoveryActivity.this, "连接超时，请检查网络或者站点是否正常", Toast.LENGTH_SHORT).show();
+                    exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
+                    break;
+                case FileUtil.fileNotExist:
+                    Toast.makeText(getApplication(), "文件不存在", Toast.LENGTH_LONG).show();
+                    checkprogressDialog.dismiss();
+                    break;
+                case FileUtil.fileRight:
+                    Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
+                    checkprogressDialog.dismiss();
+                    mainActivity.recovery.setVisibility(View.VISIBLE);
+                    mainActivity.listview_section.setVisibility(View.VISIBLE);
+                    section_select();
+
+                    break;
+                case FileUtil.fileWrong:
+                    Toast.makeText(getApplication(), "文件SHA1检验失败，请重新下载", Toast.LENGTH_LONG).show();
+                    checkprogressDialog.dismiss();
+                    // create_wim.setEnabled(true);
+                    //download.setEnabled(true);
+
+                    break;
+            }
+            super.handleMessage(msg);
+        }
+    };
 
     public updateUIThread newmyThread() {
-        mUpdateUIThread = new updateUIThread(handler, url, FileUtil.setMkdir(this) + File.separator, "test.wim");
+
+        if (j==1){
+            mUpdateUIThread = new updateUIThread(handler, url_win7_home, FileUtil.setMkdir(this) + File.separator, "online_win7_home.wim");
+        }else if (j==2){
+            mUpdateUIThread = new updateUIThread(handler, url_win7_professional, FileUtil.setMkdir(this) + File.separator, "online_win7_professional.wim");
+        }else if (j==3){
+            mUpdateUIThread = new updateUIThread(handler, url_win7_business, FileUtil.setMkdir(this) + File.separator, "online_win7_business.wim");
+        }else if (j==4){
+            mUpdateUIThread = new updateUIThread(handler, url_win8, FileUtil.setMkdir(this) + File.separator, "online_win8.wim");
+        }else if (j==5){
+            mUpdateUIThread = new updateUIThread(handler, url_win10, FileUtil.setMkdir(this) + File.separator, "online_win10.wim");
+        }
         return mUpdateUIThread;
     }
+
+
     public CheckIntegrity newcheckThread() {
-        Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
-        checkIntegrity = new CheckIntegrity(handler,wimfile,sha1_stardard);
+        //Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
+        if (i==1){
+            checkIntegrity = new CheckIntegrity(handler, wimfile7, win7_sha1_stardard);
+        }else if (i==2){
+            checkIntegrity = new CheckIntegrity(handler, wimfile10, win10_sha1_stardard);
+        }
         return checkIntegrity;
     }
 
-    private void getConfig() {
+
+    public boolean fileIsExists(String path) {
+        try {
+            File f = new File(path);
+            if (!f.exists()) {
+                return false;
+            }
+
+        } catch (Exception e) {
+            // TODO: handle exception
+            return false;
+        }
+        return true;
+    }
+
+
+
+    public void checkintergrity()                                                                                                                                                          {
+        checkprogressDialog = new ProgressDialog(RecoveryActivity.this);
+        if (checkIntegrity == null) {
+            checkIntegrity = newcheckThread();
+            checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
+            checkprogressDialog.setCancelable(false);
+            checkprogressDialog.show();
+            checkIntegrity.start();
+        } else {
+            checkIntegrity = null;
+            checkIntegrity = newcheckThread();
+            checkprogressDialog.setMessage("检验文件完整性过程时间较长，大约1分钟左右，请耐心等待…………");
+            checkprogressDialog.setCancelable(false);
+            checkprogressDialog.show();
+            checkIntegrity.start();
+        }
+    }
+
+
+
+
+
+
+    public void getConfig() {
         FileUtil.setMkdir(getApplicationContext());
         String configname = "/storage/emulated/legacy/tsing_recovery/recovery.config";
         file = new File(configname);
@@ -362,12 +330,26 @@ public class RecoveryActivity extends AppCompatActivity {
             try {
                 StringBuffer config = new StringBuffer("");
                 //config.append(sourcefile.getText().toString() + "\n");
-                sha1_stardard = "f32dffc2186e7b4b247efb3409e4065bb2fb4a20";
-                wimfile = "/storage/emulated/legacy/tsing_recovery/window.wim";
-                url = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
-                config.append(sha1_stardard+"\n");
-                config.append(wimfile + "\n");
-                config.append(url);
+                win7_sha1_stardard = "65281e401c1849a2348e773796abea06585fd527";
+                win10_sha1_stardard = "c1cf3da775b2023b9c3cb020abaa25d466bcd584";
+                wimfile7 = "/storage/emulated/legacy/tsing_recovery/window7.wim";
+                wimfile10 = "/storage/emulated/legacy/tsing_recovery/window10.wim";
+
+                url_win7_home = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+                url_win7_professional = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+                url_win7_business =  "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+                url_win8 = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+                url_win10 = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
+
+                config.append(win7_sha1_stardard + "\n");
+                config.append(win10_sha1_stardard + "\n");
+                config.append(wimfile7 + "\n");
+                config.append(wimfile10 + "\n");
+                config.append(url_win7_home);
+                config.append(url_win7_professional);
+                config.append(url_win7_business);
+                config.append(url_win8);
+                config.append(url_win10);
                 fw = new FileWriter(file);//
                 // 创建FileWriter对象，用来写入字符流
                 bw = new BufferedWriter(fw); // 将缓冲对文件的输出
@@ -398,9 +380,16 @@ public class RecoveryActivity extends AppCompatActivity {
                     temp.append(inline + "\n");
                 }
                 String[] x = temp.toString().split("\n");
-                sha1_stardard = x[0];
-                wimfile = x[1];
-                url = x[2];
+                win7_sha1_stardard = x[0];
+                win10_sha1_stardard= x[1];
+
+                wimfile7 = x[2];
+                wimfile10=x[3];
+                url_win7_home = x[4];
+                url_win7_professional = x[5];
+                url_win7_business = x[6];
+                url_win8 = x[7];
+                url_win10 = x[8];
                 br.close();
                 fr.close();
 
@@ -410,529 +399,7 @@ public class RecoveryActivity extends AppCompatActivity {
         }
     }
 
-    /*public boolean check() {
-        this.file = new File(wimfile);
-        if (file.exists()) {
-            try {
-                String str = getFileSHA(this.file);
-                Toast.makeText(getApplication(), str, Toast.LENGTH_LONG).show();
-                if (sha1_stardard.equals(str)) {
-                    Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
-                    return true;
-                } else {
-                    Toast.makeText(getApplication(), "文件SHA1检验失败，请重新下载", Toast.LENGTH_LONG).show();
-                    return false;
-                }
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-                return false;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return false;
-            }
-        } else {
-            Toast.makeText(getApplication(), "文件不存在", Toast.LENGTH_LONG).show();
-            return false;
-        }
 
-    }*/
-    /*public FileDownloadThread newfdt() {
-        try {
-            URL url = new URL(this.url);
-            URLConnection conn = null;
-
-            conn = url.openConnection();
-
-            fileSize = conn.getContentLength();
-
-            this.file = new File(FileUtil.setMkdir(this) + File.separator + "test.wim");
-            fdt = new FileDownloadThread(url, this.file);
-            return fdt;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return null;
-        }
-    }*/
-
-    public boolean isNetworkAvailable() {
-        Context context = getApplicationContext();
-        // 获取手机所有连接管理对象（包括对wi-fi,net等连接的管理）
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        //ConnectivityManager connectivity = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager == null) {
-            Toast.makeText(context, "网络异常", Toast.LENGTH_LONG).show();
-            return false;
-        } else {
-            // 获取NetworkInfo对象
-            NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-
-            if (networkInfo != null) {
-                // 判断当前网络状态是否为连接状态
-                if (networkInfo.getState() == NetworkInfo.State.CONNECTED) {
-                    return true;
-                } else {
-                    Toast.makeText(context, "网络未连接", Toast.LENGTH_LONG).show();
-                    return false;
-                }
-
-            }
-        }
-        return false;
-    }
-
-    public boolean removefile() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
-        builder.setTitle("警告");
-        builder.setMessage("点击'确定'按钮，原有的ESD文件将被删除！");
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                if(wimfile!=null)
-                    exec("rm "+wimfile);
-                Toast.makeText(getApplication(),"删除成功",Toast.LENGTH_LONG).show();
-                remove = true;
-
-            }
-        });
-        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                remove = false;
-
-            }
-        });
-        builder.create();
-        builder.show();
-        return remove;
-    }
-    public void dialog() {
-        //chooseimageid = (EditText) findViewById(R.id.chooseimageid);
-        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
-        //final String src = chooseimageid.getText().toString();
-        //create_wim.setEnabled(true);
-        download.setEnabled(true);
-        builder.setTitle("警告");
-        builder.setMessage("点击'确认'按钮，恢复系统默认安装在Windows系统盘，原有系统数据将会丢失");
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                decompress();
-                //create_wim.setEnabled(false);
-                download.setEnabled(true);
-
-            }
-        });
-        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                //chooseimageid.setEnabled(true);
-            }
-        });
-        builder.create();
-        builder.show();
-    }
-
-
-    public void typeselect() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
-        //create_wim.setEnabled(true);
-        download.setEnabled(true);
-        builder.setTitle("选择用户模式");
-        builder.setMessage("\"开发人员模式\"提供ESD文件的详细信息，供开发人员选择");
-        builder.setPositiveButton("普通用户模式", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                decompress();
-                //create_wim.setEnabled(false);
-                download.setEnabled(false);
-
-            }
-        });
-        builder.setNegativeButton("开发人员模式", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-               // imageselect();
-            }
-        });
-        builder.create();
-        builder.show();
-    }
-
-    public void reboot() {
-        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
-        //create_wim.setEnabled(true);
-        download.setEnabled(true);
-        builder.setTitle("重新启动");
-        builder.setMessage("系统已经恢复成功！");
-        builder.setPositiveButton("立即重启", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                exec("reboot");
-
-            }
-        });
-        builder.setNegativeButton("稍后重启", new DialogInterface.OnClickListener() {
-
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                // TODO Auto-generated method stub
-                // imageselect();
-            }
-        });
-        builder.create();
-        builder.show();
-    }
-    /*public void imageselect() {
-        final AlertDialog builder = new AlertDialog.Builder(RecoveryActivity.this).create();
-        String str;
-        create_wim.setEnabled(true);
-        download.setEnabled(true);
-        builder.setTitle("选择启动镜像号");
-        View view = LayoutInflater.from(getApplicationContext()).inflate(R.layout.choose, null);
-        chooselayout = (LinearLayout) view.findViewById(R.id.chooselayout);
-        bt = (Button) view.findViewById(R.id.chooseimage);
-        cancle_bt = (Button) view.findViewById(R.id.cancelimage);
-        chooseimageid = (EditText) view.findViewById(R.id.chooseimageid);
-        wiminfo = (TextView) view.findViewById(R.id.wiminfo);
-        //String path = "/storage/emulated/legacy/tsing_recovery/windows.wim";
-        if (fileIsExists(wimfile)) {
-            str = exec("wimlib-imagex-32 info " + wimfile + "\n");
-            wiminfo.setTextColor(Color.BLACK);
-        } else {
-            str = "没有相关ESD文件，请点击下方的自动下载按钮！！";
-            wiminfo.setTextColor(Color.RED);
-            bt.setEnabled(false);
-            chooselayout.setVisibility(View.GONE);
-        }
-        wiminfo.setText(str);
-        builder.setView(view);
-        builder.show();
-        View.OnClickListener imagelistener = new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-
-                // TODO Auto-generated method stub
-                src = chooseimageid.getText().toString();
-                if (src.isEmpty()) {
-                    Toast.makeText(getApplication(), "请选择镜像号", Toast.LENGTH_LONG).show();
-                } else {
-                    dialog(src);
-                    builder.dismiss();
-                }
-            }
-        };
-        View.OnClickListener cancleimagelistener = new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-
-                // TODO Auto-generated method stub
-                builder.dismiss();
-            }
-        };
-        bt.setOnClickListener(imagelistener);
-        cancle_bt.setOnClickListener(cancleimagelistener);
-    }*/
-
-    /*private void initViews() {
-
-        mTabBtnWeixin = (LinearLayout) findViewById(R.id.id_tab_bottom_weixin);
-        mTabBtnFrd = (LinearLayout) findViewById(R.id.id_tab_bottom_friend);
-
-
-        mTabBtnWeixin.setOnClickListener(this);
-        mTabBtnFrd.setOnClickListener(this);
-    }*/
-
-    /*@Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.id_tab_bottom_weixin:
-                setTabSelection(0);
-                break;
-            case R.id.id_tab_bottom_friend:
-                setTabSelection(1);
-                break;
-
-            default:
-                break;
-        }
-    }*/
-
-    /**
-     * 根据传入的index参数来设置选中的tab页。
-     */
-    @SuppressLint("NewApi")
-    /*private void setTabSelection(int index) {
-        // 重置按钮
-        resetBtn();
-        // 开启一个Fragment事务
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        // 先隐藏掉所有的Fragment，以防止有多个Fragment显示在界面上的情况
-        hideFragments(transaction);
-        switch (index) {
-            case 0:
-                // 当点击了消息tab时，改变控件的图片和文字颜色
-                mTabBtnWeixin.findViewById(R.id.id_tab_bottom_weixin).setBackgroundColor(Color.GREEN);
-                save.setVisibility(View.GONE);
-                cancel.setVisibility(View.GONE);
-                cancel_download.setVisibility(View.VISIBLE);
-                create_wim.setVisibility(View.VISIBLE);
-                download.setVisibility(View.VISIBLE);
-                help.setVisibility(View.VISIBLE);
-                info.setVisibility(View.VISIBLE);
-                progressBar.setVisibility(View.VISIBLE);
-                wancheng.setVisibility(View.GONE);
-               *//* if (mainTab == null) {
-                    // 如果MessageFragment为空，则创建一个并添加到界面上
-                    mainTab = new MainTab();
-                    transaction.add(R.id.id_content, mainTab);
-                } else {
-                    // 如果MessageFragment不为空，则直接将它显示出来
-                    transaction.show(mainTab);
-                }*//*
-                break;
-            case 1:
-                // 当点击了消息tab时，改变控件的图片和文字颜色
-                mTabBtnFrd.findViewById(R.id.id_tab_bottom_friend).setBackgroundColor(Color.GREEN);
-                save.setVisibility(View.VISIBLE);
-                cancel.setVisibility(View.VISIBLE);
-                cancel_download.setVisibility(View.GONE);
-                create_wim.setVisibility(View.GONE);
-                help.setVisibility(View.GONE);
-                download.setVisibility(View.GONE);
-                info.setVisibility(View.GONE);
-                progressBar.setVisibility(View.GONE);
-                wancheng.setVisibility(View.GONE);
-                *//*if (configTab == null) {
-                    // 如果MessageFragment为空，则创建一个并添加到界面上
-                    configTab = new ConfigTab();
-                    transaction.add(R.id.id_content, configTab);
-                } else {
-                    // 如果MessageFragment不为空，则直接将它显示出来
-                    transaction.show(configTab);
-                }*//*
-                break;
-        }
-        transaction.commit();
-    }*/
-
-    /**
-     * 清除掉所有的选中状态。
-     */
-    /*private void resetBtn() {
-
-        mTabBtnWeixin.findViewById(R.id.id_tab_bottom_weixin).setBackgroundColor(Color.LTGRAY);
-        mTabBtnFrd.findViewById(R.id.id_tab_bottom_friend).setBackgroundColor(Color.LTGRAY);
-    }*/
-
-    /**
-     * 将所有的Fragment都置为隐藏状态。
-     *
-     * @param transaction 用于对Fragment执行操作的事务
-     */
-    /*@SuppressLint("NewApi")
-    private void hideFragments(FragmentTransaction transaction) {
-        if (mainTab != null) {
-            transaction.hide(mainTab);
-        }
-        if (configTab != null) {
-            transaction.hide(configTab);
-        }
-    }*/
-
-
-    class MyTask extends AsyncTask<String, String, String> {
-        //onPreExecute方法用于在执行后台任务前做一些UI操作
-        @Override
-        protected void onPreExecute() {
-            //Log.i(TAG, "onPreExecute() called");
-
-            //info.setText("loading...");
-            recoveryprogressDialog = new ProgressDialog(RecoveryActivity.this);
-            recoveryprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-            recoveryprogressDialog.setMessage("正在恢复Windows系统，请耐心等待！");
-            recoveryprogressDialog.setCancelable(false);
-            recoveryprogressDialog.show();
-        }
-
-        //doInBackground方法内部执行后台任务,不可在此方法内修改UI
-        @Override
-        protected String doInBackground(String... params) {
-            //Log.i(TAG, "doInBackground(Params... params) called");
-
-            if (params != null) {
-                if (params[0].equals("check")) {
-                    /*if(check()) {
-                        typeselect();
-                        return "true";
-                    }
-                    else
-                        return "false";*/
-                    return "false";
-
-                } else {
-                    try {
-                        Runtime rt = Runtime.getRuntime();
-                        Process process = rt.exec("su");//Root权限
-                        //Process process = rt.exec("sh");//模拟器测试权限
-                        DataOutputStream dos = new DataOutputStream(process.getOutputStream());
-                        //dos.writeBytes(params[0] + " " + params[1] + " " + params[2] + "\n");
-                        dos.writeBytes(params[0] + "\n");
-                        dos.flush();
-                        //process.waitFor();
-                        dos.writeBytes(params[1] + "\n");
-                        dos.flush();
-                        dos.writeBytes("exit\n");
-                        dos.flush();
-                        InputStream myin = process.getInputStream();
-                        InputStreamReader is = new InputStreamReader(myin);
-                        /*******************
-                         buffer单行模式
-                         ******************/
-                        BufferedReader ibr = new BufferedReader(is);
-                        String inline;
-                        while ((inline = ibr.readLine()) != null) {
-                            System.out.println(inline);
-
-                            //调用publishProgress公布进度,最后onProgressUpdate方法将被执行
-                            //if (params[0].contains("capture")) {
-                            if (inline.contains("%")) {
-                                String[] ratio = inline.split("%");
-                                String[] temp = ratio[0].split("\\(");
-
-                                publishProgress(temp[temp.length - 1]);
-
-                            }
-
-                       /* }
-                        if (params[0].contains("apply")) {
-                            if (inline.contains("%")) {
-                                String[] ratio = inline.split("%");
-                                String[] temp = ratio[0].split("\\(");
-
-                                publishProgress("0", temp[temp.length - 1]);
-
-
-                            }
-                        } else if (params[0].contains("wget")) {
-                            if (inline.contains("%")) {
-                                String[] ratio = inline.split("%");
-                                String[] temp = ratio[0].split(" ");
-                                //File file();
-                                publishProgress("1", inline);
-
-
-                            } else {
-                                publishProgress("hello", "test");
-                            }*/
-
-
-                            /******************
-                             buffer全获取方式
-                             *****************/
-                    /*char[] buffer = new char[OUTPUT_BUFFER_SIZE];
-                    int bytes_read = is.read(buffer);
-                    StringBuffer aOutputBuffer = new StringBuffer();
-                    while (bytes_read > 0) {
-                        //info.setText(aOutputBuffer.toString());
-                        aOutputBuffer.append(buffer, 0, bytes_read);
-
-                        bytes_read = is.read(buffer);
-                    }
-                    /****************
-                    获取错误输出流信息
-                    ****************/
-                    /*
-                    InputStream stderr = process.getErrorStream();
-                    InputStreamReader isr = new InputStreamReader(stderr);
-                    BufferedReader br = new BufferedReader(isr);
-                    String line = null;
-                    System.out.println("<ERROR>");
-                    while ((line = br.readLine()) != null)
-                        System.out.println(line);
-                    System.out.println("</ERROR>");
-                    */
-                        }
-                        return "系统恢复成功";
-                    }catch(IOException e){
-                        e.printStackTrace();
-
-                        return "操作异常";
-                    }
-
-                }
-
-
-
-            }
-            else{
-                System.out.println("退出");
-                return "请输入正确的命令";
-            }
-        }
-
-        //onProgressUpdate方法用于更新进度信息
-        @Override
-        protected void onProgressUpdate(String... progresses) {
-            //progressBar.setProgress(Integer.parseInt(progresses[0]));
-            //info.setText(progresses[0] + "%");
-            recoveryprogressDialog.setProgress(Integer.parseInt(progresses[0]));
-        }
-
-        //onPostExecute方法用于在执行完后台任务后更新UI,显示结果
-        @Override
-        protected void onPostExecute(String result) {
-            //Toast.makeText(getApplication(), result, Toast.LENGTH_LONG).show();
-            recoveryprogressDialog.dismiss();
-            if(result.equals("系统恢复成功"))
-                reboot();
-            if(result.equals("false"))
-                isRight = false;
-            //create_wim.setEnabled(true);
-            download.setEnabled(true);
-            //chooseimageid.setEnabled(true);
-        }
-
-        //onCancelled方法用于在取消执行中的任务时更改UI
-        @Override
-        protected void onCancelled() {
-            //Log.i(TAG, "onCancelled() called");
-            //info.setText("cancelled");
-            //progressBar.setProgress(0);
-            /*create_wim.setEnabled(true);
-            cancel_wim.setEnabled(false);*/
-        }
-    }
-
-    public boolean fileIsExists(String path) {
-        try {
-            File f = new File(path);
-            if (!f.exists()) {
-                return false;
-            }
-
-        } catch (Exception e) {
-            // TODO: handle exception
-            return false;
-        }
-        return true;
-    }
 
     public String exec(String cmd) {
         try {
@@ -950,16 +417,20 @@ public class RecoveryActivity extends AppCompatActivity {
                 dos.flush();
                 InputStream myin = process.getInputStream();
                 InputStreamReader is = new InputStreamReader(myin);
-                /*******************
+                */
+/*******************
                  buffer单行模式
-                 ******************/
-                /*BufferedReader ibr = new BufferedReader(is);
+                 ******************//*
+
+                */
+/*BufferedReader ibr = new BufferedReader(is);
                 String inline;
                 StringBuffer sb = new StringBuffer("");
                 while ((inline = ibr.readLine()) != null) {
                     System.out.println(inline);
                     sb.append(inline+"\n");
-                }*/
+                }*//*
+
 
 
                 char[] buffer = new char[OUTPUT_BUFFER_SIZE];
@@ -983,62 +454,37 @@ public class RecoveryActivity extends AppCompatActivity {
         }
     }
 
-    public void decompress() {
-
-        //Toast.makeText(getApplication(), "展开" + src, Toast.LENGTH_LONG).show();
-
-        /*String info = exec("blkid");
-        String[] target = info.split("\n");
-        for (int i = 0; i < target.length; i++) {
-            if (target[i].contains("ntfs")) {
-                String cmd = "blockdev --getsz " + target[i].split(":")[0];
-                String sda = exec(cmd);
-                if (Integer.parseInt(sda.split("\n")[0]) / 2 > 5000000) {
-                    dir = target[i].split(":")[0];
-                    break;
-                }
-            }
-        }
-        */
 
 
-        String dir = "/dev/block/sda"+choose_section;
-        /*for(int i=0;i<section_detail.size();i++){
-            //for(int j=0;j<section_detail.get(i).length;j++)
+    public void section_select() {
 
-        }
-        Toast.makeText(getApplication(),section_detail.get(2),Toast.LENGTH_SHORT).show();*/
-
-        String cmd1 = "mkntfs -f " + dir;
-        String cmd2 = "wimlib-imagex apply " + wimfile + " " + chooseid + " " + dir;
-        Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
-        Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();
-        MyTask myTask = new MyTask();
-        myTask.execute(cmd1, cmd2);
-        //Toast.makeText(getApplication(), section_select(), Toast.LENGTH_LONG).show();
-    }
-
-    private void section_select(){
         String section_cmd = "fdisk -l /dev/block/sda";
         String info = exec(section_cmd);
         String[] section_info = info.split("\n");
+
         section_detail = new ArrayList<>();
-        for(int i=0;i<section_info.length;i++){
-            if(section_info[i].contains("Number") && section_info[i].contains("Start") && section_info[i].contains("End")){
-                for(int j=i+1;j<section_info.length;j++){
+        disk_size = new ArrayList<>();
+
+        for (int i = 0; i < section_info.length; i++) {
+            BigInteger begin, end;
+            if (section_info[i].contains("Number") && section_info[i].contains("Start") && section_info[i].contains("End")) {
+                for (int j = i + 1; j < section_info.length; j++) {
                     String[] temp = section_info[j].split("\\s+");
-                    section_detail.add(temp[1]+"  "+temp[4]);
+                    section_detail.add(temp[1] + "  " + temp[4]);
+                    begin = new BigInteger(temp[2]);
+                    end = new BigInteger(temp[3]);
+                    disk_size.add(end.subtract(begin).pow(512));
                 }
                 break;
             }
         }
-        final AlertDialog.Builder section_select = new AlertDialog.Builder(RecoveryActivity.this);
-        section_select.setTitle("请选择分区");
+        //final AlertDialog.Builder section_select = new AlertDialog.Builder(RecoveryActivity.this);
+        //section_select.setTitle("请选择分区");
 
 
-        int num  = section_detail.size();
+        int num = section_detail.size();
         data = new String[num];
-        for(int i=0;i<num;i++) {
+        for (int i = 0; i < num; i++) {
             switch (i) {
                 case 0:
                     data[i] = section_detail.get(i) + "  " + "MSR分区";
@@ -1054,153 +500,232 @@ public class RecoveryActivity extends AppCompatActivity {
             }
 
         }
-        section_select.setItems(data, new DialogInterface.OnClickListener() {
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(RecoveryActivity.this, R.layout.listview_item1, data);
+
+        mainActivity.listview_section.setAdapter(adapter);
+        mainActivity.listview_section.setBackgroundColor(Color.LTGRAY);
+        mainActivity.listview_section.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (position != 0 && position != 1 && position != 2) {
+                    if (disk_size.get(position).compareTo(image_size.get(Integer.valueOf(chooseid) - 1)) > 0) {
+                        if (pos != -1) {
+                            View v = parent.getChildAt(pos);
+                            v.setBackgroundColor(Color.LTGRAY);
+                        }
+                        pos = position;
+                        choose_section = String.valueOf(position + 1);
+                        TextView tv = (TextView) view.findViewById(R.id.itemText1);
+                        tv.setTextColor(Color.WHITE);
+                        view.setBackgroundResource(R.color.blue);
+
+                    } else {
+                        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
+                        builder.setTitle("警告");
+                        builder.setMessage("该分区磁盘空间不足，请选择其他分区");
+                        builder.setNeutralButton("确认", new DialogInterface.OnClickListener() {
+
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // TODO Auto-generated method stub
+
+                            }
+                        });
+                        builder.create();
+                        builder.show();
+                    }
+                } else {
+                    final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
+                    builder.setTitle("警告");
+                    builder.setMessage("该分区为系统自带分区，请选择序号3以后的分区");
+                    builder.setNeutralButton("确认", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+
+                        }
+                    });
+                    builder.create();
+                    builder.show();
+                }
+            }
+        });
+    }
+
+
+
+
+    class MyTask extends AsyncTask<String, String, String> {
+        //onPreExecute方法用于在执行后台任务前做一些UI操作
+        @Override
+        protected void onPreExecute() {
+            //Log.i(TAG, "onPreExecute() called");
+
+            //info.setText("loading...");
+            recoveryprogressDialog = new ProgressDialog(RecoveryActivity.this);
+            recoveryprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            recoveryprogressDialog.setMessage("正在恢复Windows系统，请耐心等待！");
+            recoveryprogressDialog.setCancelable(false);
+            recoveryprogressDialog.show();
+        }
+
+        //doInBackground方法内部执行后台任务,不可在此方法内修改UI
+        @Override
+        protected String doInBackground(String... params) {
+            //Log.i(TAG, "doInBackground(Params... params) called");
+
+            if (params != null) {
+                if (params[0].equals("check")) {
+                    return "false";
+
+                } else {
+                    try {
+                        Runtime rt = Runtime.getRuntime();
+                        Process process = rt.exec("su");//Root权限
+                        //Process process = rt.exec("sh");//模拟器测试权限
+                        DataOutputStream dos = new DataOutputStream(process.getOutputStream());
+                        //dos.writeBytes(params[0] + " " + params[1] + " " + params[2] + "\n");
+                        dos.writeBytes(params[0] + "\n");
+                        dos.flush();
+                        //process.waitFor();
+                        dos.writeBytes(params[1] + "\n");
+                        dos.flush();
+                        dos.writeBytes("exit\n");
+                        dos.flush();
+                        InputStream myin = process.getInputStream();
+                        InputStreamReader is = new InputStreamReader(myin);
+                        */
+/*******************
+                         buffer单行模式
+                         ******************//*
+
+                        BufferedReader ibr = new BufferedReader(is);
+                        String inline;
+                        while ((inline = ibr.readLine()) != null) {
+                            System.out.println(inline);
+
+                            //调用publishProgress公布进度,最后onProgressUpdate方法将被执行
+                            //if (params[0].contains("capture")) {
+                            if (inline.contains("%")) {
+                                String[] ratio = inline.split("%");
+                                String[] temp = ratio[0].split("\\(");
+
+                                publishProgress(temp[temp.length - 1]);
+
+                            }
+                        }
+                        return "系统恢复成功";
+                    } catch (IOException e) {
+                        e.printStackTrace();
+
+                        return "操作异常";
+                    }
+
+                }
+
+
+            } else {
+                System.out.println("退出");
+                return "请输入正确的命令";
+            }
+        }
+
+        //onProgressUpdate方法用于更新进度信息
+        @Override
+        protected void onProgressUpdate(String... progresses) {
+            //progressBar.setProgress(Integer.parseInt(progresses[0]));
+            //info.setText(progresses[0] + "%");
+            recoveryprogressDialog.setProgress(Integer.parseInt(progresses[0]));
+        }
+
+        //onPostExecute方法用于在执行完后台任务后更新UI,显示结果
+        @Override
+        protected void onPostExecute(String result) {
+            //Toast.makeText(getApplication(), result, Toast.LENGTH_LONG).show();
+            recoveryprogressDialog.dismiss();
+            if (result.equals("系统恢复成功"))
+               reboot();
+            if (result.equals("false"))
+                isRight = false;
+        }
+
+        //onCancelled方法用于在取消执行中的任务时更改UI
+        @Override
+        protected void onCancelled() {
+        }
+    }
+
+
+
+    public void decompress() {
+
+
+        String dir = "/dev/block/sda" + choose_section;
+        String cmd1 = "mkntfs -f " + dir;
+        String cmd2 = "wimlib-imagex apply " + wimfile7 + " " + dir;
+        String cmd3 = "wimlib-imagex apply " + wimfile10 + " " + dir;
+
+        String cmd4 = "wimlib-imagex apply " + fromonline_win7_home + " " + dir;
+        String cmd5 = "wimlib-imagex apply " + fromonline_win7_professional + " " + dir;
+        String cmd6 = "wimlib-imagex apply " + fromonline_win7_business + " " + dir;
+        String cmd7 = "wimlib-imagex apply " + fromonline_win8 + " " + dir;
+        String cmd8 = "wimlib-imagex apply " + fromonline_win10 + " " + dir;
+        */
+/*Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();*//*
+
+        MyTask myTask = new MyTask();
+
+        if (i!=0 && j==0) {
+            if (i == 1) {
+                myTask.execute(cmd1, cmd2);
+            } else if (i == 2) {
+                myTask.execute(cmd1, cmd3);
+            }
+        }else if (i==0 && j!=0){
+            if (j==1){
+                myTask.execute(cmd1, cmd4);
+            } else if (j==2){
+                myTask.execute(cmd1, cmd5);
+            } else if (j==3){
+                myTask.execute(cmd1, cmd6);
+            } else if (j==4){
+                myTask.execute(cmd1, cmd7);
+            } else if (j==5){
+                myTask.execute(cmd1, cmd8);
+            }
+        }
+    }
+
+
+
+    public void reboot() {
+        final AlertDialog.Builder builder = new AlertDialog.Builder(RecoveryActivity.this);
+        //create_wim.setEnabled(true);
+
+        builder.setTitle("重新启动");
+        builder.setMessage("系统已经恢复成功！");
+        builder.setPositiveButton("立即重启", new DialogInterface.OnClickListener() {
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                //Toast.makeText(RecoveryActivity.this, data[which], Toast.LENGTH_SHORT).show();
-                switch (which) {
-                    case 0:
-                    case 1:
-                    case 2:
-                        Toast.makeText(getApplication(), "不能恢复到该分区", Toast.LENGTH_LONG).show();
-                        break;
-
-                    default: {
-                        choose_section = String.valueOf(which + 1);
-                        dialog();
-                    }
-                }
+                // TODO Auto-generated method stub
+                exec("reboot");
 
             }
         });
-        section_select.create().show();
-        /*section_select.setPositiveButton("确定",new DialogInterface.OnClickListener() {
+        builder.setNegativeButton("稍后重启", new DialogInterface.OnClickListener() {
+
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-                Toast.makeText(RecoveryActivity.this, "确定", Toast.LENGTH_SHORT).show();
-                choose_section = "0";
+                // TODO Auto-generated method stub
+                // imageselect();
             }
-        });*/
-
-
-        /*if(choose_section.equals("0"))
-            return "";
-        else
-            return "/dev/block/sda"+choose_section;*/
+        });
+        builder.create();
+        builder.show();
     }
-    /**
-     * get file md5
-     *
-     * @param file
-     * @return
-     * @throws NoSuchAlgorithmException
-     * @throws IOException
-     */
-   /* private static String getFileSHA(File file) throws NoSuchAlgorithmException, IOException {
-        if (!file.isFile()) {
-            return null;
-        }
-        MessageDigest digest;
-        FileInputStream in;
-        byte buffer[] = new byte[1024];
-        int len;
-        digest = MessageDigest.getInstance("SHA-1");
-        in = new FileInputStream(file);
-        while ((len = in.read(buffer, 0, 1024)) != -1) {
-            digest.update(buffer, 0, len);
-        }
-        in.close();
-        BigInteger bigInt = new BigInteger(1, digest.digest());
-        return bigInt.toString(16);
-    }*/
-
-    private Handler handler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case FileUtil.startDownloadMeg:
-
-                    //progressBar.setMax(mUpdateUIThread.getFileSize());   //开始
-                    downloadprogressDialog.setMax(mUpdateUIThread.getFileSize());
-                    downloadprogressDialog.setMessage("正在下载，请耐心等待……");
-                    downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-                    downloadprogressDialog.show();
-                    downloadprogressDialog.setCancelable(false);
-                    downloadprogressDialog.onStart();
-                    break;
-                case FileUtil.updateDownloadMeg:
-                    if (!mUpdateUIThread.isCompleted())   //下载
-                    {
-                        //Log.e(TAG, "已下载：" + mUpdateUIThread.getDownloadSize());
-                        //progressBar.setProgress(mUpdateUIThread.getDownloadSize());
-                        downloadprogressDialog.setProgress(mUpdateUIThread.getDownloadSize());
-                        //.setText("下载速度：" + mUpdateUIThread.getDownloadSpeed() + "k/秒"/*       下载百分比" + mUpdateUIThread.getDownloadPercent() + "%"*/);
-                    } else {
-                        //info.setText("下载完成");
-                    }
-                    break;
-                case FileUtil.endDownloadMeg:
-                    Toast.makeText(RecoveryActivity.this, "下载完成", Toast.LENGTH_SHORT).show();
-                    downloadprogressDialog.dismiss();
-				/*apk安装界面跳转*/
-                   /* String filename = FileUtil.getFileName(url);
-                    String str = "/tsing_recovery/" + filename;
-                    String fileName = Environment.getExternalStorageDirectory() + str;
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(Uri.fromFile(new File(fileName)), "application/vnd.android.package-archive");
-                    startActivity(intent);*//*
-                    //exec("mv /storage/emulated/legacy/tsing_recovery/" + filename + " /system/test/test.wim");*/
-                    //info.setText("下载完成");
-                    //.setProgress(0);
-                    //create_wim.setEnabled(true);
-
-                    //.setEnabled(true);
-                    cancel_download.setEnabled(false);
-                    break;
-                case FileUtil.cancleDownloadMeg:
-                    Toast.makeText(RecoveryActivity.this, "取消下载", Toast.LENGTH_SHORT).show();
-                    exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
-                    //info.setText("下载取消");
-                    //progressBar.setProgress(0);
-                    //create_wim.setEnabled(true);
-                    download.setEnabled(true);
-                    cancel_download.setEnabled(false);
-                    downloadprogressDialog.dismiss();
-
-                    break;
-                case FileUtil.timeout:
-                    Toast.makeText(RecoveryActivity.this, "连接超时，请检查网络或者站点是否正常", Toast.LENGTH_SHORT).show();
-                    exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
-                    //.setText("连接超时");
-                    //progressBar.setProgress(0);
-                    //create_wim.setEnabled(true);
-                    download.setEnabled(true);
-                    cancel_download.setEnabled(false);
-                    break;
-                case FileUtil.fileNotExist:
-                    Toast.makeText(getApplication(), "文件不存在", Toast.LENGTH_LONG).show();
-                    checkprogressDialog.dismiss();
-                    //create_wim.setEnabled(true);
-                    download.setEnabled(true);
-                    break;
-                case FileUtil.fileRight:
-                    Toast.makeText(getApplication(), "文件SHA1检验正确", Toast.LENGTH_LONG).show();
-                    checkprogressDialog.dismiss();
-                    section_select();
-
-
-                    break;
-                case FileUtil.fileWrong:
-                    Toast.makeText(getApplication(), "文件SHA1检验失败，请重新下载", Toast.LENGTH_LONG).show();
-                    checkprogressDialog.dismiss();
-                   // create_wim.setEnabled(true);
-                    download.setEnabled(true);
-                    break;
-            }
-            super.handleMessage(msg);
-        }
-    };
-
 }
+*/

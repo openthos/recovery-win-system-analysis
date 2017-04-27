@@ -1,4 +1,0 @@
-<resources>
-    <string name="app_name">SystemRecovery</string>
-    <string name="wim_dir">/system/</string>
-</resources>

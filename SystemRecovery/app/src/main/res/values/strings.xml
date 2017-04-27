@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SystemRecovery系统恢复工具</string>
+    <string name="app_name">Windows系统恢复工具</string>
     <string name="wim_dir">/storage/sdcard0/tsing_recovery/test.wim</string>
     <string name="downloadaddress">http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe</string>
     <string name="total">总体介绍：本APP主要包括两个界面：恢复系统和配置信息</string>

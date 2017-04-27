@@ -1,7 +1,6 @@
 package com.example.junzhen.systemrecovery;
 
 import android.util.Log;
-
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.RandomAccessFile;
@@ -48,6 +47,7 @@ public class FileDownloadThread extends Thread {
         this.flag = false;
         Log.e(TAG, toString());
     }
+
 
     @Override
     public void run() {
