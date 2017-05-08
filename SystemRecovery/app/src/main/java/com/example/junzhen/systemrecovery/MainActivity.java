@@ -3,6 +3,10 @@ package com.example.junzhen.systemrecovery;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+/*
+import android.support.v7.app.AlertDialog;
+import android.support.v7.app.AppCompatActivity;
+*/
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -31,6 +35,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -41,6 +46,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 
 public class MainActivity extends Activity {
@@ -184,7 +190,9 @@ public class MainActivity extends Activity {
                 builder.setTitle("系统恢复流程");
                 builder.setMessage("1.如果本地有windows系统的镜像，则可以选择本地镜像，在右侧的分区列表中选择您想要恢复到哪个分区，然后就可以将现在的系统恢复到windows系统了；\n" +
                         "2.如果本地没有windows系统的镜像，您可以通过云盘下载我们官方的镜像，同样在分区列表选择分区，即可开始恢复windows系统。");
+
                 builder.setNeutralButton("确定", null);
+
                 builder.create();
                 builder.show();
 
@@ -411,7 +419,8 @@ public class MainActivity extends Activity {
         builder.show();
     }
 
-    private void checkintergrity()                                                                                                                                                          {
+    private void checkintergrity() {
+
         checkprogressDialog = new ProgressDialog(MainActivity.this);
         if (checkIntegrity == null) {
             checkIntegrity = newcheckThread();
@@ -605,6 +614,49 @@ public class MainActivity extends Activity {
         }
     }
 
+
+
+
+    public List<String> getBlockDev() {
+        List<String> fileList = new ArrayList<String>();
+
+        String filePath = "/sys/class/block/";
+
+        String regEx = "sd[a-z]";
+        Pattern pattern = Pattern.compile(regEx);
+
+        //获得该路径文件夹下所有的文件
+        File mfile = new File(filePath);
+        File[] files = mfile.listFiles();
+
+        //将所有的文件存入ArrayList中
+        for (int i = 0; i < files.length; i++) {
+            File file = files[i];
+            if(pattern.matcher(file.getName()).matches()){
+                Log.d("getFileList","regEx files: " +  file.getPath());
+
+                File file_r = new File(file.getPath() + "/removable");
+                try{
+                    FileInputStream in = new FileInputStream(file_r);
+                    byte byt[] = new byte[128];
+                    int len = in.read(byt);
+
+                    String getStr = new String(byt);
+                    if (getStr.startsWith("0")){
+                        fileList.add(file.getName());
+                    }
+                    in.close();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+
+            }
+        }
+
+        Log.d("getFileList","match files: " +  fileList);
+        return fileList;
+    }
+
     private boolean isNumeric(String str){
         for (int i = str.length();--i>=0;){
             if (!Character.isDigit(str.charAt(i))){
@@ -613,7 +665,6 @@ public class MainActivity extends Activity {
         }
         return true;
     }
-
 
     private void section_select() {
 
@@ -632,11 +683,12 @@ public class MainActivity extends Activity {
             String tmp_sp = "  ";
             String[] fdisk_line = section_info[i].trim().split("\\s+");
 
-            Log.v("WinRec", "section_info:" + fdisk_line[0] + "  " +fdisk_line[1] + " " + fdisk_line[2] );
+            //Log.v("WinRec", "section_info:" + fdisk_line[0] + "  " +fdisk_line[1] + " " + fdisk_line[2] );
             if (fdisk_line.length < 3){
                 continue;
             }
 
+            //get disk dev info
             if (fdisk_line[1].startsWith("/dev/block/sd")&&isNumeric(fdisk_line[2])) {
                 BigInteger tmp_size;
                 Size = new BigInteger(fdisk_line[2],10);
@@ -645,9 +697,10 @@ public class MainActivity extends Activity {
                 block_dev = fdisk_line[1].substring(0, fdisk_line[1].length() - 1);
                 //section_detail.add(fdisk_line[1].substring(0, fdisk_line[1].length() - 1) + tmp_sp + tmp_size +"M");
 
-            }else if ( isNumeric(fdisk_line[1]) && isNumeric(fdisk_line[2]) ){
+            //get disk partition info
+            }else if (isNumeric(fdisk_line[0]) && isNumeric(fdisk_line[1]) && isNumeric(fdisk_line[2]) ){
                 //section_detail.add(fdisk_line[0] + tmp_sp + fdisk_line[1] + tmp_sp + fdisk_line[2] + tmp_sp + fdisk_line[3] + tmp_sp + fdisk_line[5] + " ");
-                if (fdisk_line[5].startsWith("EFI")) {
+                if (fdisk_line.length > 5 && fdisk_line[5].startsWith("EFI")) {
                     choose_efi = block_dev + fdisk_line[0];
                 }
 
@@ -827,7 +880,6 @@ public class MainActivity extends Activity {
                     }
 
                 }
-
 
             } else {
                 System.out.println("退出");
