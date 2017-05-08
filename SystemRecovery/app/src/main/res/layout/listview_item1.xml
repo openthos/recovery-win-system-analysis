@@ -5,8 +5,10 @@
         android:id="@+id/itemText1"
         android:layout_width="fill_parent"
         android:layout_height="@android:dimen/notification_large_icon_height"
-        android:layout_gravity="center"
+        android:gravity="center_vertical"
+	android:layout_gravity="start|center_vertical"
         android:paddingRight="5dip"
         android:textColor="@color/black"
-    android:textSize="32sp"
+        android:textSize="25sp"
+	android:padding="3dp"
      />

@@ -20,6 +20,7 @@ import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -48,10 +49,9 @@ public class MainActivity extends Activity {
     private MainTab mainTab;
     private static final int OUTPUT_BUFFER_SIZE = 1024;
 
-
     private String wimfile7,wimfile8,wimfile10;
 
-
+    private String efi_win ;
 
     private File file;
 
@@ -62,6 +62,7 @@ public class MainActivity extends Activity {
     List<BigInteger> image_size;
     List<BigInteger> disk_size;
     List<String> section_detail;
+    List<String> deny_part;
 
     private boolean isRight = false;
 
@@ -79,11 +80,16 @@ public class MainActivity extends Activity {
 
     private String chooseid = "";
     private String choose_section = "";
-    private  String url_win7_home,url_win8,url_win10;
+    private String choose_partition = "";
+    private String choose_efi = "";
+    private String url_win7_home,url_win8,url_win10,url_efi;
+
+    private String downloads_rm ;
 
     private CheckIntegrity checkIntegrity = null;
     // private CheckIntegrity checkIntegrity10 = null;
     private updateUIThread mUpdateUIThread = null;
+    private updateUIThread efiUpdateUIThread = null;
 
     private String win7_sha1_stardard,win8_sha1_stardard,win10_sha1_stardard;
 
@@ -91,12 +97,15 @@ public class MainActivity extends Activity {
     ProgressDialog recoveryprogressDialog;
     ProgressDialog downloadprogressDialog;
 
+    private ImageButton offline, online;
+
     private Button recovery,helpMessagge;
 
     private Button offline_win7,offline_win8, offline_win10,online_win7_home,online_win8,online_win10;
 
-
     public int i,j;
+
+    private PartitionsAdapter mAdapter;
 
     @SuppressLint("NewApi")
     @Override
@@ -110,15 +119,8 @@ public class MainActivity extends Activity {
        /* offline = (ImageButton) findViewById(R.id.offline);
         online = (ImageButton) findViewById(R.id.online);*/
 
-        offline_win7 = (Button)findViewById(R.id.offline_win7);
-        offline_win8 = (Button) findViewById(R.id.offline_win8);
         offline_win10=(Button)findViewById(R.id.offline_win10);
-
-        online_win7_home = (Button)findViewById(R.id.online_win7);
-        online_win8 = (Button)findViewById(R.id.online_win8);
         online_win10 = (Button) findViewById(R.id.online_win10);
-
-
 
         recovery = (Button) findViewById(R.id.recovery);
         helpMessagge=(Button) findViewById(R.id.helpMessage);
@@ -126,46 +128,6 @@ public class MainActivity extends Activity {
 
         recovery.setVisibility(View.GONE);
         listview_section.setVisibility(View.GONE);
-
-        View.OnClickListener offline_win7_listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO Auto-generated method stub
-                if (fileIsExists(wimfile7)) {
-                    //setWiminfo();
-                    i=1;
-                    checkintergrity();
-
-                } else {
-                    //弹出下载对话框
-                    Toast.makeText(getApplication(), "您的电脑磁盘没找到系统布置文件，请使用网络云盘", Toast.LENGTH_LONG).show();
-                }
-            }
-
-
-        };
-        offline_win7.setOnClickListener(offline_win7_listener);
-
-
-        View.OnClickListener offline_win8_listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO Auto-generated method stub
-                if (fileIsExists(wimfile8)) {
-                    //setWiminfo();
-                    i=2;
-                    checkintergrity();
-
-                } else {
-                    //弹出下载对话框
-                    Toast.makeText(getApplication(), "您的电脑磁盘没找到系统布置文件，请使用网络云盘", Toast.LENGTH_LONG).show();
-                }
-            }
-
-
-        };
-        offline_win8.setOnClickListener(offline_win8_listener);
-
 
         View.OnClickListener offline_win10_listener = new View.OnClickListener() {
             @Override
@@ -177,79 +139,13 @@ public class MainActivity extends Activity {
                     checkintergrity();
 
                 } else {
+
                     //弹出下载对话框
                     Toast.makeText(getApplication(), "您的电脑磁盘没找到系统布置文件，请使用网络云盘", Toast.LENGTH_LONG).show();
                 }
             }
         };
         offline_win10.setOnClickListener(offline_win10_listener);
-
-
-
-        View.OnClickListener online_win7_home_listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO Auto-generated method stub
-                if (fileIsExists(wimfile7)) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("提示");
-                    builder.setMessage("云盘系统部署工具已经存在，是否重新下载！");
-                    builder.setNeutralButton("确定", new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // TODO Auto-generated method stub
-                            exec("rm /storage/emulated/legacy/tsing_recovery/win7_home.wim");
-                            j=1;
-                            download_dialog();
-                        }
-                    });
-                    builder.setNegativeButton("取消",null);
-                    builder.create();
-                    builder.show();
-                } else {
-                    //弹出下载对话框
-                    j=1;
-                    download_dialog();
-                }
-            }
-        };
-        online_win7_home.setOnClickListener(online_win7_home_listener);
-
-
-        View.OnClickListener online_win8_listener = new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // TODO Auto-generated method stub
-                if (fileIsExists(wimfile8)) {
-                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("提示");
-                    builder.setMessage("云盘系统部署工具已经存在，是否重新下载！");
-                    builder.setNeutralButton("确定", new DialogInterface.OnClickListener() {
-
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // TODO Auto-generated method stub
-                            exec("rm /storage/emulated/legacy/tsing_recovery/win8.wim");
-                            j=2;
-                            download_dialog();
-                        }
-                    });
-                    builder.setNegativeButton("取消",null);
-                    builder.create();
-                    builder.show();
-                } else {
-                    //弹出下载对话框
-                    j=2;
-                    download_dialog();
-                }
-            }
-        };
-        online_win8.setOnClickListener(online_win8_listener);
-
-
-
-
 
         View.OnClickListener online_win10_listener = new View.OnClickListener() {
             @Override
@@ -264,7 +160,7 @@ public class MainActivity extends Activity {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             // TODO Auto-generated method stub
-                            exec("rm /storage/emulated/legacy/tsing_recovery/win10.wim");
+                            exec(downloads_rm);
                             j=3;
                             download_dialog();
                         }
@@ -281,7 +177,6 @@ public class MainActivity extends Activity {
         };
         online_win10.setOnClickListener(online_win10_listener);
 
-
         View.OnClickListener helpMessaggelistener = new View.OnClickListener(){
             @Override
             public void onClick(View v) {
@@ -297,22 +192,31 @@ public class MainActivity extends Activity {
         };
         helpMessagge.setOnClickListener(helpMessaggelistener);
 
-
-
-
         View.OnClickListener recoverylistener = new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
                 // TODO Auto-generated method stub
+                if (choose_partition.equals("")){
+                    return;
+                }
+
+                    for (int k=0; k < deny_part.size(); k++){
+                        if (choose_partition.equals(deny_part.get(k))){
+                            return;
+                        }
+                    }
+
                 dialog();
             }
         };
         recovery.setOnClickListener(recoverylistener);
+
         getConfig();
+        downloads_rm = "rm -f " + wimfile10 + "  " + efi_win ;
+
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
-
 
 
     private void setWiminfo() {
@@ -365,7 +269,7 @@ public class MainActivity extends Activity {
     }
 
     public void set_listview() {
-        SimpleAdapter adapter = new SimpleAdapter(this, listems, R.layout.listview_item, new String[]{"picture", "name"}, new int[]{R.id.itemImage, R.id.itemText});
+        SimpleAdapter adapter = new SimpleAdapter(this, listems, R.layout.listview_item , new String[]{"picture", "name"}, new int[]{R.id.itemImage, R.id.itemText});
 
         listview.setAdapter(adapter);
         listview.setBackgroundColor(Color.LTGRAY);
@@ -391,7 +295,7 @@ public class MainActivity extends Activity {
     public void download_dialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("提示");
-        builder.setMessage("没有找到系统恢复文件，请点击\"下载\"按钮开始下载官方文件！");
+        builder.setMessage("点击\"下载\"按钮开始下载官方系统恢复文件");
         builder.setPositiveButton("下载", new DialogInterface.OnClickListener() {
 
             @Override
@@ -419,6 +323,28 @@ public class MainActivity extends Activity {
             downloadprogressDialog = new ProgressDialog(MainActivity.this);
             downloadprogressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 
+
+/*
+            if (efiUpdateUIThread == null) {
+                efiUpdateUIThread = efiDownloadThread();
+                efiUpdateUIThread.start();
+            } else {
+                efiUpdateUIThread = null;
+                efiUpdateUIThread = efiDownloadThread();
+                efiUpdateUIThread.start();
+            }
+
+
+            if (mUpdateUIThread == null) {
+                mUpdateUIThread = wimDownloadThread();
+                mUpdateUIThread.start();
+            } else {
+                mUpdateUIThread = null;
+                mUpdateUIThread = wimDownloadThread();
+                mUpdateUIThread.start();
+            }
+	    */
+
             if (mUpdateUIThread == null) {
                 mUpdateUIThread = newmyThread();
                 mUpdateUIThread.start();
@@ -427,6 +353,7 @@ public class MainActivity extends Activity {
                 mUpdateUIThread = newmyThread();
                 mUpdateUIThread.start();
             }
+
         } else {
             Toast.makeText(getApplication(), "网络未连接", Toast.LENGTH_LONG).show();
         }
@@ -502,22 +429,29 @@ public class MainActivity extends Activity {
         }
     }
 
-
     public updateUIThread newmyThread() {
 
-
-      /*  mUpdateUIThread = new updateUIThread(handler, url_win7_home, FileUtil.setMkdir(this) + File.separator, "online_win7_home.wim");*/
-        if (j==1){
-            mUpdateUIThread = new updateUIThread(handler, url_win7_home, FileUtil.setMkdir(this) + File.separator, "win7_home.wim");
-        }else if (j==2){
-            mUpdateUIThread = new updateUIThread(handler, url_win8, FileUtil.setMkdir(this) + File.separator, "win8.wim");
-        }else if (j==3){
-            mUpdateUIThread = new updateUIThread(handler, url_win10, FileUtil.setMkdir(this) + File.separator, "win10.wim");
-        }
+        mUpdateUIThread = new updateUIThread(handler, url_win10, FileUtil.setMkdir(this) + File.separator, "windows.wim");
         return mUpdateUIThread;
     }
 
 
+    /*  mUpdateUIThread = new updateUIThread(handler, url_win7_home, FileUtil.setMkdir(this) + File.separator, "online_win7_home.wim");*/
+
+    /*
+
+    public updateUIThread wimDownloadThread() {
+        Log.v("WinRec", "Downloading windows.wim");
+        mUpdateUIThread = new updateUIThread(handler, url_win10, FileUtil.setMkdir(this) + File.separator, "windows.wim");
+        return mUpdateUIThread;
+    }
+
+    public updateUIThread efiDownloadThread() {
+        Log.v("WinRec", "Downloading efi.tar");
+        efiUpdateUIThread = new updateUIThread(handler, url_efi, FileUtil.setMkdir(this) + File.separator, "efi.tar");
+        return efiUpdateUIThread;
+    }
+    */
 
     public CheckIntegrity newcheckThread() {
         //Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
@@ -545,26 +479,18 @@ public class MainActivity extends Activity {
             try {
                 StringBuffer config = new StringBuffer("");
                 //config.append(sourcefile.getText().toString() + "\n");
-                win7_sha1_stardard = "0237435ae2a14078510136201ebb4e67e7425e81";
-                win8_sha1_stardard = "58589cf5b04fd17524ff8ef9e0c54cc73ea3f382";
-                win10_sha1_stardard = "9b0a40b1aabf6948b7b7bf83ec0679c479016242";
-                wimfile7 = "/storage/emulated/legacy/tsing_recovery/win7_home.wim";
-                wimfile8 = "/storage/emulated/legacy/tsing_recovery/win8.wim";
-                wimfile10 = "/storage/emulated/legacy/tsing_recovery/win10.wim";
+                win10_sha1_stardard = "9e37983f063d68ca97465a16ea870600bea79cc0";
+                wimfile10 = "/storage/emulated/legacy/tsing_recovery/windows.wim";
+                efi_win = "/storage/emulated/legacy/tsing_recovery/efi.tar" ;
+               // url_win10 = "http://192.168.0.185/dl/windows.wim";
+                url_win10 = "http://dldir1.qq.com/qqfile/qq/TIM1.0.5/20303/TIM1.0.5.exe";
+                url_efi = "http://192.168.0.185/dl/efi.tar";
 
-                url_win7_home = "http://192.168.0.129:8080/AppStoreServer/Resource/Software/9/9.apk";
-                url_win8 = "http://dldir1.qq.com/qqfile/qq/QQ7.7/16096/QQ7.7.exe";
-                url_win10 = " http://192.168.0.81:8080/win10.wim";
-
-                config.append(win7_sha1_stardard + "\n");
-                config.append(win8_sha1_stardard + "\n");
                 config.append(win10_sha1_stardard + "\n");
-                config.append(wimfile7 + "\n");
-                config.append(wimfile8 + "\n");
                 config.append(wimfile10 + "\n");
-                config.append(url_win7_home + "\n");
-                config.append(url_win8 + "\n");
+                config.append(efi_win + "\n");
                 config.append(url_win10 + "\n");
+                config.append(url_efi + "\n");
                 fw = new FileWriter(file);//
                 // 创建FileWriter对象，用来写入字符流
                 bw = new BufferedWriter(fw); // 将缓冲对文件的输出
@@ -596,16 +522,13 @@ public class MainActivity extends Activity {
                 }
 
 
-                String[] x = temp.toString().split("\n");
-                win7_sha1_stardard = x[0];
-                win8_sha1_stardard = x[1];
-                win10_sha1_stardard= x[2];
-                wimfile7 = x[3];
-                wimfile8 = x[4];
-                wimfile10=x[5];
-                url_win7_home = x[6];
-                url_win8 = x[7];
-                url_win10 = x[8];
+                String[] x = temp.toString().split("\\n+");
+                win10_sha1_stardard= x[0];
+                wimfile10=x[1];
+                efi_win = x[2];
+                url_win10 = x[3];
+                url_efi = x[4];
+
                 br.close();
                 fr.close();
 
@@ -613,6 +536,9 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             }
         }
+
+        Log.v("WinRec", win10_sha1_stardard + "\n" + wimfile10 + "\n" + efi_win + "\n" + url_win10 + "\n" +url_efi );
+
     }
 
     public boolean fileIsExists(String path) {
@@ -645,9 +571,10 @@ public class MainActivity extends Activity {
                 dos.flush();
                 InputStream myin = process.getInputStream();
                 InputStreamReader is = new InputStreamReader(myin);
-                /*******************
+                /*
                  buffer单行模式
-                 ******************/
+		 */
+
                 /*BufferedReader ibr = new BufferedReader(is);
                 String inline;
                 StringBuffer sb = new StringBuffer("");
@@ -678,18 +605,71 @@ public class MainActivity extends Activity {
         }
     }
 
+    private boolean isNumeric(String str){
+        for (int i = str.length();--i>=0;){
+            if (!Character.isDigit(str.charAt(i))){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
     private void section_select() {
 
-        String section_cmd = "fdisk -l /dev/block/sda";
+        String section_cmd = "fdisk -l /dev/block/sd[a-z]";
+        String block_dev = "/dev/block/";
         String info = exec(section_cmd);
-        String[] section_info = info.split("\n");
+        String[] section_info = info.trim().split("\\n+");
 
         section_detail = new ArrayList<>();
         disk_size = new ArrayList<>();
 
+        deny_part = new ArrayList<>();
+
+        for (int i = 0; i < section_info.length; i++) {
+            BigInteger Start, End, Size;
+            String tmp_sp = "  ";
+            String[] fdisk_line = section_info[i].trim().split("\\s+");
+
+            Log.v("WinRec", "section_info:" + fdisk_line[0] + "  " +fdisk_line[1] + " " + fdisk_line[2] );
+            if (fdisk_line.length < 3){
+                continue;
+            }
+
+            if (fdisk_line[1].startsWith("/dev/block/sd")&&isNumeric(fdisk_line[2])) {
+                BigInteger tmp_size;
+                Size = new BigInteger(fdisk_line[2],10);
+                tmp_size = Size.multiply(BigInteger.valueOf(512)).divide(BigInteger.valueOf(1048576)); //1024*1024 = 1048576
+
+                block_dev = fdisk_line[1].substring(0, fdisk_line[1].length() - 1);
+                //section_detail.add(fdisk_line[1].substring(0, fdisk_line[1].length() - 1) + tmp_sp + tmp_size +"M");
+
+            }else if ( isNumeric(fdisk_line[1]) && isNumeric(fdisk_line[2]) ){
+                //section_detail.add(fdisk_line[0] + tmp_sp + fdisk_line[1] + tmp_sp + fdisk_line[2] + tmp_sp + fdisk_line[3] + tmp_sp + fdisk_line[5] + " ");
+                if (fdisk_line[5].startsWith("EFI")) {
+                    choose_efi = block_dev + fdisk_line[0];
+                }
+
+                Start = new BigInteger(fdisk_line[1],10);
+                End = new BigInteger(fdisk_line[2],10);
+
+                //if partition < 5G , deny it .
+                if ( End.subtract(Start).multiply(BigInteger.valueOf(512)).divide(BigInteger.valueOf(1048576)).compareTo(BigInteger.valueOf(5120)) < 0){
+                    deny_part.add(block_dev + fdisk_line[0]);
+                }
+
+                //Log.v("WinRec", "this partition size: " +  End.subtract(Start).multiply(BigInteger.valueOf(512)).divide(BigInteger.valueOf(1048576)) + "M" );
+
+                section_detail.add(block_dev + section_info[i].trim());
+            }
+        }
+        Log.v("WinRec", "EFI partition: " + choose_efi);
+
+/*
         for (int i = 0; i < section_info.length; i++) {
             BigInteger begin, end;
-            if (/*section_info[i].contains("Number") &&*/ section_info[i].contains("Start") && section_info[i].contains("End")) {
+            if ( section_info[i].contains("Start") && section_info[i].contains("End")) {
                 for (int j = i + 1; j < section_info.length; j++) {
                     String[] temp = section_info[j].split("\\s+");
                     section_detail.add(temp[1] + "  " + temp[4]);
@@ -700,10 +680,11 @@ public class MainActivity extends Activity {
                 break;
             }
         }
+*/
+
         //final AlertDialog.Builder section_select = new AlertDialog.Builder(RecoveryActivity.this);
         //section_select.setTitle("请选择分区");
-
-
+/*
         int num = section_detail.size();
         data = new String[num];
         for (int i = 0; i < num; i++) {
@@ -722,56 +703,49 @@ public class MainActivity extends Activity {
             }
 
         }
+        */
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, R.layout.listview_item1, data);
+        //final ArrayAdapter<String> adapter = new ArrayAdapter<>(MainActivity.this, R.layout.listview_item1, data);
+        ArrayList<String> datas = new ArrayList<>();
+        ArrayList<String> deny_datas = new ArrayList<>();
+        /*
+        for (int k = 0; k < data.length; k++) {
+            datas.add(data[k]);
+        }*/
 
-        listview_section.setAdapter(adapter);
-        listview_section.setBackgroundColor(Color.LTGRAY);
+        for (int k=0; k < section_detail.size(); k++){
+            datas.add(section_detail.get(k));
+        }
+
+        for (int k=0; k < deny_part.size(); k++){
+            deny_datas.add(deny_part.get(k));
+        }
+
+
+        mAdapter = new PartitionsAdapter(this, datas, deny_datas);
+        listview_section.setAdapter(mAdapter);
+        listview_section.setBackgroundColor(Color.WHITE);
         listview_section.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-               /* if (position != 0 && position != 1 && position != 2) {
-                    if (disk_size.get(position).compareTo(image_size.get(Integer.valueOf(chooseid) - 1)) > 0) {
-                        if (pos != -1) {
-                            View v = parent.getChildAt(pos);
-                            v.setBackgroundColor(Color.LTGRAY);
-                        }*/
-                        pos = position;
-                        choose_section = String.valueOf(position + 1);
-                        TextView tv = (TextView) view.findViewById(R.id.itemText1);
-                        tv.setTextColor(Color.WHITE);
-                        view.setBackgroundResource(R.color.blue);
 
-                 /*   } else {
-                        final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                        builder.setTitle("警告");
-                        builder.setMessage("该分区磁盘空间不足，请选择其他分区");
-                        builder.setNeutralButton("确认", new DialogInterface.OnClickListener() {
 
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                // TODO Auto-generated method stub
+                /*
+                pos = position;
+                choose_section = String.valueOf(position + 1);
+                */
 
-                            }
-                        });
-                        builder.create();
-                        builder.show();
-                    }
-                } else {
-                    final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                    builder.setTitle("警告");
-                    builder.setMessage("该分区为系统自带分区，请选择序号3以后的分区");
-                    builder.setNeutralButton("确认", new DialogInterface.OnClickListener() {
+                //TextView tv = (TextView) view.findViewById(R.id.itemText1);
+                //tv.setTextColor(Color.WHITE);
+                //view.setBackgroundResource(R.color.gray);
 
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // TODO Auto-generated method stub
+                String get_text =  ((TextView) view).getText().toString();
+                choose_partition = get_text.trim().substring(0,15);
+                Log.v("WinRec", "Partition: " + choose_partition);
 
-                        }
-                    });
-                    builder.create();
-                    builder.show();
-                }*/
+                mAdapter.setmSelectPos(position, choose_partition);
+                mAdapter.notifyDataSetChanged();
+
             }
         });
     }
@@ -805,42 +779,39 @@ public class MainActivity extends Activity {
                 } else {
                     try {
 
-                        Log.v("Window","1");
                         Runtime rt = Runtime.getRuntime();
-                        Log.v("Window","2");
                         Process process = rt.exec("su");//Root权限
                         //Process process = rt.exec("sh");//模拟器测试权限
-                        Log.v("Window","3");
                         DataOutputStream dos = new DataOutputStream(process.getOutputStream());
                         //dos.writeBytes(params[0] + " " + params[1] + " " + params[2] + "\n");
 
-                        Log.v("Window","4");
                         dos.writeBytes(params[0] + "\n");
-                        Log.v("Window","5");
                         dos.flush();
                         //process.waitFor();
-                        Log.v("Window","6");
+
                         dos.writeBytes(params[1] + "\n");
-                        Log.v("Window","7");
                         dos.flush();
-                        Log.v("Window","8");
+
+                        dos.writeBytes(params[2] + "\n");
+                        dos.flush();
+
                         dos.writeBytes("exit\n");
-                        Log.v("Window","9");
                         dos.flush();
+
                         InputStream myin = process.getInputStream();
                         InputStreamReader is = new InputStreamReader(myin);
 
-                        Log.v("Window","10");
+                        Log.v("Window","over");
                         BufferedReader ibr = new BufferedReader(is);
                         String inline;
                         while ((inline = ibr.readLine()) != null) {
                             System.out.println(inline);
 
                             //调用publishProgress公布进度,最后onProgressUpdate方法将被执行
-                            //if (params[0].contains("capture")) {
+                            //if (params[0].contains("capture")) 
                             if (inline.contains("%")) {
 
-                                Log.v("Window","11");
+                                Log.v("Window","progress");
                                 String[] ratio = inline.split("%");
                                 String[] temp = ratio[0].split("\\(");
 
@@ -891,33 +862,26 @@ public class MainActivity extends Activity {
 
     public void decompress() {
 
+        //String dir = "/dev/block/sdb" + choose_section;
+	    //String efi_dev="/dev/block/sdb2";
+	    String efi_dir="/data/local/tmp/efi/";
 
-        String dir = "/dev/block/sda" + choose_section;
+        String dir = choose_partition;
+        String efi_dev = choose_efi;
+
         String cmd1 = "mkntfs -f " + dir;
-        String cmd2 = "wimlib-imagex apply " + wimfile7 + " " + "4 "+ dir;
-        String cmd3 = "wimlib-imagex apply " + wimfile8 + " " + dir;
-        String cmd4 = "wimlib-imagex apply " + wimfile10 + " " + dir;
+        String cmd_wim = "wimlib-imagex apply " + wimfile10 + " " + dir;
+
+	    //String efi_rec= "mkdir -p " + efi_dir + " ; mount -t vfat " + efi_dev + " " + efi_dir + " ; cp -rf " + efi_win + " " + efi_dir + "EFI/ ; umount " + efi_dir ;
+	    String efi_rec= "mkdir -p " + efi_dir + " ; mount -t vfat " + efi_dev + " " + efi_dir + " ; tar -xf " + efi_win + " -C " + efi_dir + "EFI/ ; umount " + efi_dir ;
 
         /*Toast.makeText(getApplication(), cmd2, Toast.LENGTH_LONG).show();
         Toast.makeText(getApplication(), cmd1, Toast.LENGTH_LONG).show();*/
         MyTask myTask = new MyTask();
 
-
-
        // myTask.execute(cmd1, cmd2);
 
-            if (i == 1) {
-
-                Log.v("Window","i=1");
-                myTask.execute(cmd1, cmd2);
-            } else if (i == 2) {
-                Log.v("Window","i=2");
-                myTask.execute(cmd1, cmd3);
-            } else if (i==3){
-                Log.v("Window","i=3");
-                myTask.execute(cmd1, cmd4);
-            }
-
+    	myTask.execute(cmd1, cmd_wim, efi_rec);
 
     }
 
@@ -932,7 +896,7 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-                exec("reboot");
+                exec("sync; reboot -f");
 
             }
         });
@@ -975,13 +939,13 @@ public class MainActivity extends Activity {
                     break;
                 case FileUtil.cancleDownloadMeg:
                     Toast.makeText(MainActivity.this, "取消下载", Toast.LENGTH_SHORT).show();
-                    exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
+                    exec(downloads_rm);
                     downloadprogressDialog.dismiss();
 
                     break;
                 case FileUtil.timeout:
                     Toast.makeText(MainActivity.this, "连接超时，请检查网络或者站点是否正常", Toast.LENGTH_SHORT).show();
-                    exec("rm /storage/emulated/legacy/tsing_recovery/test.wim");
+                    exec(downloads_rm);
                     break;
                 case FileUtil.fileNotExist:
                     Toast.makeText(getApplication(), "文件不存在", Toast.LENGTH_LONG).show();
@@ -998,6 +962,7 @@ public class MainActivity extends Activity {
                     listview_section.setVisibility(View.VISIBLE);
                     system.setVisibility(View.GONE);
                     partition.setVisibility(View.VISIBLE);*/
+
                     recovery.setVisibility(View.VISIBLE);
                     listview_section.setVisibility(View.VISIBLE);
                     section_select();

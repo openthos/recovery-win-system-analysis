@@ -2,51 +2,33 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/darkgray"
+    android:background="@android:color/white"
     android:orientation="horizontal">
 
     <LinearLayout
         android:id="@+id/images"
-        android:layout_width="178dp"
-        android:layout_height="506dp"
+        android:layout_width="200dp"
+        android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
         android:orientation="vertical"
-        android:weightSum="1">
+        android:weightSum="1"
+        android:background="#C3CAD4"
+        >
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="32dp"
-            android:autoText="false"
             android:text="系统镜像"
-       android:textSize="16dp"
+            android:textSize="20dp"
+            android:textColor="#000000"
             />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="本地"
-            android:textSize="13dp"
-            />
-
-        <Button
-            android:id="@+id/offline_win7"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="windows 7 家庭版"
-            android:background="#00000000"
-            android:gravity="left|center"
-            android:layout_margin="10dp"
-
-            />
-        <Button
-            android:id="@+id/offline_win8"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="windows 8 专业版"
-            android:background="#00000000"
-            android:gravity="left|center"
-            android:layout_margin="10dp"
-
+            android:textSize="15dp"
+            android:textColor="#000000"
             />
 
         <Button
@@ -54,73 +36,25 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="windows 10 专业版"
-            android:background="#00000000"
             android:gravity="left|center"
             android:layout_margin="10dp"
 
             />
-
-     <!--
+<!--
         <ImageButton
             android:id="@+id/offline"
             android:layout_width="60dp"
             android:layout_height="40dp"
             android:src="@drawable/disk"
             android:layout_margin="10dp"
-            />-->
-
-
-
-
+            />
+	    -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="云端"
-            android:textSize="13dp"
-            />
-
-        <Button
-            android:id="@+id/online_win7"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="windows 7 家庭版"
-            android:background="#00000000"
-            android:gravity="left|center"
-            android:layout_margin="10dp"
-
-            />
-
-        <!--<Button
-            android:id="@+id/online_win7_professional"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="windows 7 专业版"
-            android:background="#00000000"
-            android:gravity="left|center"
-            android:layout_margin="10dp"
-
-            />
-
-        <Button
-            android:id="@+id/online_win7_business"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="windows 7 企业版"
-            android:background="#00000000"
-            android:gravity="left|center"
-            android:layout_margin="10dp"
-
-            />-->
-
-        <Button
-            android:id="@+id/online_win8"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="windows 8 专业版"
-            android:background="#00000000"
-            android:gravity="left|center"
-            android:layout_margin="10dp"
-
+            android:textSize="15dp"
+            android:textColor="#000000"
             />
 
         <Button
@@ -128,37 +62,34 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="windows 10 专业版"
-            android:background="#00000000"
             android:gravity="left|center"
             android:layout_margin="10dp"
-
             />
 <!--
-        <ImageButton
+	<ImageButton
             android:id="@+id/online"
             android:layout_width="60dp"
             android:layout_height="40dp"
             android:src="@drawable/online"
             android:layout_margin="10dp"
-            />-->
-
+            />
+	    -->
         <Button
             android:id="@+id/helpMessage"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="帮助信息"
-            android:textSize="13dp"
+            android:textSize="15dp"
             android:textAppearance="?android:attr/textAppearanceLarge"
             android:gravity="center"
             />
 
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/line1"
+    <View
         android:layout_width="1dp"
-        android:layout_height="fill_parent"
-        android:background="#010101" />
+        android:layout_height="match_parent"
+        android:background="#E6E6E6" />
 
     <LinearLayout
         android:id="@+id/targetdisk"
@@ -166,14 +97,15 @@
         android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
         android:layout_weight="1"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:background="@android:color/white" >
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="32dp"
-            android:autoText="false"
             android:text="目标分区"
-            android:textSize="16dp"
+            android:textSize="20dp"
+            android:textColor="#000000"
             />
 
         <ListView

@@ -79,17 +79,22 @@ public class updateUIThread extends Thread {
     @Override
     public void run() {
 
-
         try {
             URL url = new URL(UrlStr);
-            URLConnection conn = url.openConnection();
+            URLConnection conn = (URLConnection)url.openConnection();
+
+/*
+            conn.setRequestProperty("User-Agent", " Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/37.0.2062.120 Safari/537.36");
+            conn.setConnectTimeout(15000);
+            conn.setReadTimeout(15000);
+*/
+
             fileSize = conn.getContentLength();
             sendMsg(FileUtil.startDownloadMeg);
-            Log.e(TAG, "文件一共：" + fileSize);
+            Log.e(TAG, "文件Size:" + fileSize);
 
             File file = new File(savePath + fileName);
             FileDownloadThread fdt = new FileDownloadThread(url, file);
-
 
             fdt.setName("downloadThread");
             fdt.start();
@@ -116,7 +121,7 @@ public class updateUIThread extends Thread {
                 }
                 downloadPercent = (downloadSize * 100) / fileSize;
                 curTime = System.currentTimeMillis();
-                System.out.println("curTime = " + curTime + " downloadSize = " + downloadSize + " usedTime " + (int) ((curTime - startTime) / 1000));
+               // System.out.println("curTime = " + curTime + " downloadSize = " + downloadSize + " usedTime " + (int) ((curTime - startTime) / 1000));
                 usedTime = (int) ((curTime - startTime) / 1000);
 
                 if (usedTime == 0) {
@@ -131,6 +136,7 @@ public class updateUIThread extends Thread {
             } else if (flag) {
                 completed = true;
                 Log.e(TAG, "ok");
+
                 sendMsg(FileUtil.endDownloadMeg);
             } else
                 sendMsg(FileUtil.cancleDownloadMeg);
