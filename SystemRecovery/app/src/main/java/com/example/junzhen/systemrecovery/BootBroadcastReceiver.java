@@ -7,6 +7,7 @@ import android.content.Intent;
 /**
  * Created by junzhen on 2015/10/28.
  */
+/*
 public class BootBroadcastReceiver extends BroadcastReceiver {
     static final String ACTION = "android.intent.action.BOOT_COMPLETED";
 
@@ -19,3 +20,4 @@ public class BootBroadcastReceiver extends BroadcastReceiver {
         }
     }
 }
+*/

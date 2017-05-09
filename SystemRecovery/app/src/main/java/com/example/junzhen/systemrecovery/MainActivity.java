@@ -16,14 +16,18 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.DownloadListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -41,12 +45,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.RandomAccessFile;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 
 public class MainActivity extends Activity {
@@ -88,16 +97,19 @@ public class MainActivity extends Activity {
     private String choose_section = "";
     private String choose_partition = "";
     private String choose_efi = "";
-    private String url_win7_home,url_win8,url_win10,url_efi;
+    private String efi_dir="/data/local/tmp/efi/";
+    private String url_win10,url_efi;
 
     private String downloads_rm ;
+    private ProgressDialog mProgressDialog;
+
 
     private CheckIntegrity checkIntegrity = null;
     // private CheckIntegrity checkIntegrity10 = null;
     private updateUIThread mUpdateUIThread = null;
     private updateUIThread efiUpdateUIThread = null;
 
-    private String win7_sha1_stardard,win8_sha1_stardard,win10_sha1_stardard;
+    private String win10_sha1_stardard;
 
     ProgressDialog checkprogressDialog;
     ProgressDialog recoveryprogressDialog;
@@ -107,7 +119,7 @@ public class MainActivity extends Activity {
 
     private Button recovery,helpMessagge;
 
-    private Button offline_win7,offline_win8, offline_win10,online_win7_home,online_win8,online_win10;
+    private Button  offline_win10, online_win10, efi_backup;
 
     public int i,j;
 
@@ -127,6 +139,8 @@ public class MainActivity extends Activity {
 
         offline_win10=(Button)findViewById(R.id.offline_win10);
         online_win10 = (Button) findViewById(R.id.online_win10);
+
+        efi_backup = (Button) findViewById(R.id.backup_efi);
 
         recovery = (Button) findViewById(R.id.recovery);
         helpMessagge=(Button) findViewById(R.id.helpMessage);
@@ -160,7 +174,7 @@ public class MainActivity extends Activity {
                 if (fileIsExists(wimfile10)) {
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                     builder.setTitle("提示");
-                    builder.setMessage("云盘系统部署工具已经存在，是否重新下载！");
+                    builder.setMessage("云盘系统镜像已经存在，是否重新下载？");
                     builder.setNeutralButton("确定", new DialogInterface.OnClickListener() {
 
                         @Override
@@ -182,6 +196,35 @@ public class MainActivity extends Activity {
             }
         };
         online_win10.setOnClickListener(online_win10_listener);
+
+
+        View.OnClickListener efi_backup_listener = new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+
+                if (fileIsExists(efi_win)) {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("提示");
+                    builder.setMessage("Windows efi已经备份，是否重新备份？");
+                    builder.setNeutralButton("确定", new DialogInterface.OnClickListener() {
+
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // TODO Auto-generated method stub
+                            backup_windows_efi();
+                        }
+                    });
+                    builder.setNegativeButton("取消",null);
+                    builder.create();
+                    builder.show();
+                } else {
+                    //备份
+                    backup_windows_efi();
+                }
+
+            }
+        };
+        efi_backup.setOnClickListener(efi_backup_listener);
 
         View.OnClickListener helpMessaggelistener = new View.OnClickListener(){
             @Override
@@ -221,7 +264,8 @@ public class MainActivity extends Activity {
         recovery.setOnClickListener(recoverylistener);
 
         getConfig();
-        downloads_rm = "rm -f " + wimfile10 + "  " + efi_win ;
+        //downloads_rm = "rm -f " + wimfile10 + "  " + efi_win ;
+        downloads_rm = "rm -f " + wimfile10 ;
 
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
@@ -300,18 +344,77 @@ public class MainActivity extends Activity {
         });
     }
 
+    public void backup_windows_efi(){
+
+        String section_cmd = "fdisk -l /dev/block/sd[a-z]";
+        String block_dev = "/dev/block/";
+        String info = exec(section_cmd);
+        String[] section_info = info.trim().split("\\n+");
+
+        for (int i = 0; i < section_info.length; i++) {
+            String[] fdisk_line = section_info[i].trim().split("\\s+");
+            if (fdisk_line.length < 3){
+                continue;
+            }
+
+            //get disk dev info
+            if (fdisk_line[1].startsWith("/dev/block/sd")&&isNumeric(fdisk_line[2])) {
+                block_dev = fdisk_line[1].substring(0, fdisk_line[1].length() - 1);
+
+                //get disk partition info
+            }else if (isNumeric(fdisk_line[0]) && isNumeric(fdisk_line[1]) && isNumeric(fdisk_line[2]) ){
+
+                if (fdisk_line.length > 5 && fdisk_line[5].startsWith("EFI")) {
+                    choose_efi = block_dev + fdisk_line[0];
+                    break;
+                }
+            }
+        }
+        Log.v("WinRec", "Detected EFI partition: " + choose_efi);
+
+        final EditText inputServer = new EditText(this);
+        inputServer.setText(choose_efi);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("EFI分区").setIcon(android.R.drawable.ic_dialog_info).setView(inputServer);
+        builder.setMessage("检测的EFI分区是否正确？");
+
+        builder.setNegativeButton("取消", null);
+        builder.setPositiveButton("正确", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int which) {
+                choose_efi = inputServer.getText().toString();
+                Log.v("WinRec", "Get EFI partition: " + choose_efi);
+
+                String regEx = "/dev/block/sd[a-z][0-9]";
+                Pattern pattern = Pattern.compile(regEx);
+                if(pattern.matcher(choose_efi.trim()).matches()){
+
+                    String cmd_efi = "mkdir -p " + efi_dir + " ; mount -t vfat " + choose_efi + " " + efi_dir + " ; tar -cf " + efi_win + " Microsoft/ -C " + efi_dir + "EFI/ ; umount " + efi_dir ;
+                    Log.v("WinRec", "EFI partition backup: " + cmd_efi);
+                    exec(cmd_efi);
+
+                    Toast.makeText(getApplication(), "EFI分区备份成功！", Toast.LENGTH_LONG).show();
+                }else {
+                    Toast.makeText(getApplication(), "EFI分区不正确，备份失败！", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+        builder.show();
+
+    }
+
+
     public void download_dialog() {
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle("提示");
-        builder.setMessage("点击\"下载\"按钮开始下载官方系统恢复文件");
+        builder.setMessage("开始下载系统恢复文件。");
         builder.setPositiveButton("下载", new DialogInterface.OnClickListener() {
 
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // TODO Auto-generated method stub
-
-                download();
-
+               // download();
+                download_file(url_win10, wimfile10.substring(0, wimfile10.lastIndexOf("/")));
             }
         });
         builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
@@ -394,6 +497,51 @@ public class MainActivity extends Activity {
         return false;
     }
 
+    public void download_file(String fileUrl, String fileDir) {
+        if (isNetworkAvailable()) {
+
+            mProgressDialog = new ProgressDialog(MainActivity.this);
+           // mProgressDialog.setTitle("Downloading...");
+            mProgressDialog.setMessage("正在下载...");
+            mProgressDialog.setIndeterminate(true);
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+            mProgressDialog.setCanceledOnTouchOutside(false);
+            mProgressDialog.setCancelable(true);
+            mProgressDialog.setProgressNumberFormat("%1dMB/%2dMB");
+
+            final DownloadTask downloadTask = new DownloadTask(MainActivity.this);
+
+            /*
+            mProgressDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "暂停", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    downloadTask.pauseDownload();
+                }
+            });
+            */
+            mProgressDialog.setButton(DialogInterface.BUTTON_NEGATIVE, "取消", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    downloadTask.cancelDownload();
+
+                }
+            });
+            mProgressDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+                @Override
+                public void onCancel(DialogInterface dialog) {
+                    downloadTask.cancelDownload();
+
+                }
+            });
+
+            downloadTask.execute(fileUrl, fileDir);
+
+        }else{
+            Toast.makeText(getApplication(), "网络未连接", Toast.LENGTH_LONG).show();
+        }
+
+    }
+
     public void dialog() {
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
@@ -466,14 +614,8 @@ public class MainActivity extends Activity {
         //Toast.makeText(getApplication(), wimfile, Toast.LENGTH_LONG).show();
 
        /* checkIntegrity = new CheckIntegrity(handler, wimfile7, win7_sha1_stardard);*/
-       // if (i!=0&&j==0) {
-            if (i == 1) {
-                checkIntegrity = new CheckIntegrity(handler, wimfile7, win7_sha1_stardard);
-            } else if (i == 2) {
-                checkIntegrity = new CheckIntegrity(handler, wimfile8, win8_sha1_stardard);
-            }else if (i == 3) {
-                checkIntegrity = new CheckIntegrity(handler, wimfile10, win10_sha1_stardard);
-            }
+
+        checkIntegrity = new CheckIntegrity(handler, wimfile10, win10_sha1_stardard);
         return checkIntegrity;
     }
 
@@ -613,8 +755,6 @@ public class MainActivity extends Activity {
             return "操作异常";
         }
     }
-
-
 
 
     public List<String> getBlockDev() {
@@ -803,6 +943,178 @@ public class MainActivity extends Activity {
         });
     }
 
+    private class DownloadTask extends AsyncTask<String, Integer, Integer>{
+        public static final int TYPE_SUCCESS = 0;
+        public static final int TYPE_FAILED = 1;
+        public static final int TYPE_PAUSED = 2;
+        public static final int TYPE_CANCELED = 3;
+
+        private boolean isCanceled = false;
+        private boolean isPaused = false;
+        private int lastProgress;
+
+        private Context context;
+        private PowerManager.WakeLock mWakeLock;
+
+        public DownloadTask(Context context){
+            this.context = context;
+        }
+
+        @Override
+        protected Integer doInBackground(String... params) {
+
+            InputStream is = null;
+            RandomAccessFile savedFile = null;
+            File file = null;
+            try {
+                long downloadedLength = 0;
+                String downloadUrl = params[0];
+                String fileName = downloadUrl.substring(downloadUrl.lastIndexOf("/"));
+                //String directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getPath();
+                String directory = params[1];
+                file = new File(directory + "/" + fileName);
+                Log.d("DownloadTask: ","file path: " + file.getPath() );
+
+                if (file.exists()){
+                    downloadedLength = file.length();
+                }
+                long contentLength = getContentLength(downloadUrl);
+                Log.d("DownloadTask: ","getContentLength: " + (contentLength / (1024*1024)) + "M" );
+
+                if (contentLength == 0){
+                    return TYPE_FAILED;
+                }else if(contentLength == downloadedLength){
+                    return TYPE_SUCCESS;
+                }
+
+                OkHttpClient client = new OkHttpClient();
+                Request request = new Request.Builder()
+                        //断点下载
+                        .addHeader("RANGE", "bytes=" + downloadedLength + "-")
+                        .url(downloadUrl)
+                        .build();
+                Response response = client.newCall(request).execute();
+
+                if(response != null){
+                    is = response.body().byteStream();
+                    savedFile = new RandomAccessFile(file, "rw");
+                    savedFile.seek(downloadedLength); //跳过已下载的字节
+
+                    byte[] b = new byte[1024];
+                    int total = 0;
+                    int len;
+
+                    while ((len = is.read(b)) != -1){
+                        if(isCanceled){
+                            return TYPE_CANCELED;
+                        }else if(isPaused){
+                            return TYPE_PAUSED;
+                        }else{
+                            total += len;
+                            savedFile.write(b, 0, len);
+
+                            //下载百分比
+                            int progress = (int) ((total + downloadedLength) * 100 / contentLength);
+                            //publishProgress(progress);
+                            publishProgress((int)(total + downloadedLength), (int)contentLength);
+                        }
+                    }
+                    response.body().close();
+                    return TYPE_SUCCESS;
+                }
+
+            } catch (Exception e){
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (is != null){
+                        is.close();
+                    }
+                    if (savedFile != null){
+                        savedFile.close();
+                    }
+                    if (isCanceled && file != null){
+                        file.delete();
+                    }
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+            return TYPE_FAILED;
+
+        }
+
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+
+            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK,
+                    getClass().getName());
+            mWakeLock.acquire();
+            mProgressDialog.show();
+        }
+
+
+        @Override
+        protected void onProgressUpdate(Integer... progress) {
+            super.onProgressUpdate(progress);
+
+            mProgressDialog.setIndeterminate(false);
+            mProgressDialog.setProgress(progress[0]/(1024*1024));
+            mProgressDialog.setMax(progress[1]/(1024*1024));
+
+        }
+
+        @Override
+        protected void onPostExecute(Integer status) {
+            mWakeLock.release();
+            mProgressDialog.dismiss();
+
+            switch(status){
+                case TYPE_SUCCESS:
+                    Toast.makeText(context,"Download Success!", Toast.LENGTH_SHORT).show();
+                    break;
+                case TYPE_FAILED:
+                    Toast.makeText(context,"Download Failed!", Toast.LENGTH_SHORT).show();
+                    break;
+                case TYPE_PAUSED:
+                    Toast.makeText(context,"Download Paused!", Toast.LENGTH_SHORT).show();
+                    break;
+                case TYPE_CANCELED:
+                    Toast.makeText(context,"Download Canceled!", Toast.LENGTH_SHORT).show();
+                default:
+                    break;
+            }
+
+        }
+
+        private long getContentLength(String downloadUrl) throws IOException{
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder()
+                    .url(downloadUrl)
+                    .build();
+
+            Response response = client.newCall(request).execute();
+            if(response != null && response.isSuccessful()){
+                long contenLength = response.body().contentLength();
+                response.body().close();
+                return contenLength;
+            }
+            return 0;
+        }
+
+        public void pauseDownload(){
+            isPaused = true;
+        }
+
+        public void cancelDownload(){
+            isCanceled = true;
+        }
+
+    }
+
     class MyTask extends AsyncTask<String, String, String> {
 
         //onPreExecute方法用于在执行后台任务前做一些UI操作
@@ -916,7 +1228,6 @@ public class MainActivity extends Activity {
 
         //String dir = "/dev/block/sdb" + choose_section;
 	    //String efi_dev="/dev/block/sdb2";
-	    String efi_dir="/data/local/tmp/efi/";
 
         String dir = choose_partition;
         String efi_dev = choose_efi;

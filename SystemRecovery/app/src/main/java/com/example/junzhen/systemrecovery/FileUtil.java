@@ -72,9 +72,9 @@ public class FileUtil {
         if(!file.exists())
         {
             boolean b = file.mkdirs();
-            Log.e("file", "文件不存在  创建文件    " + b);
+            Log.v("file", "文件不存在  创建文件    " + b);
         }else{
-            Log.e("file", "文件存在");
+            Log.v("file", "文件存在");
         }
         return filePath;
     }
