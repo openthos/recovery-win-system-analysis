@@ -2,7 +2,6 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/white"
     android:orientation="horizontal">
 
     <LinearLayout
@@ -12,30 +11,46 @@
         android:layout_gravity="center_horizontal"
         android:orientation="vertical"
         android:weightSum="1"
-        android:background="#C3CAD4"
-        >
+        android:background="#C3CAD4">
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:text="系统镜像"
+            android:layout_height="50dp"
+            android:text="系统"
+            android:textSize="25dp"
+            android:textColor="@color/black"
+            />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="云端"
             android:textSize="20dp"
-            android:textColor="#000000"
+            android:textColor="@color/black"
+            />
+
+        <Button
+            android:id="@+id/online_win10"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Windows 镜像下载"
+            android:gravity="left|center"
+            android:layout_margin="10dp"
             />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="本地"
-            android:textSize="15dp"
-            android:textColor="#000000"
+            android:textSize="20dp"
+            android:textColor="@color/black"
             />
 
         <Button
             android:id="@+id/offline_win10"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="windows 镜像部署"
+            android:text="Windows 镜像部署"
             android:gravity="left|center"
             android:layout_margin="10dp"
 
@@ -43,47 +58,15 @@
 
         <Button
             android:id="@+id/backup_efi"
-            android:text="windows efi 备份"
+            android:text="Windows EFI 备份"
             android:gravity="left|center"
             android:layout_margin="10dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
-<!--
-        <ImageButton
-            android:id="@+id/offline"
-            android:layout_width="60dp"
-            android:layout_height="40dp"
-            android:src="@drawable/disk"
-            android:layout_margin="10dp"
-            />
-	    -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="云端"
-            android:textSize="15dp"
-            android:textColor="#000000"
-            />
 
-        <Button
-            android:id="@+id/online_win10"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="windows 镜像下载"
-            android:gravity="left|center"
-            android:layout_margin="10dp"
-            />
-<!--
-	<ImageButton
-            android:id="@+id/online"
-            android:layout_width="60dp"
-            android:layout_height="40dp"
-            android:src="@drawable/online"
-            android:layout_margin="10dp"
-            />
-	    -->
+
         <LinearLayout
-            android:id="@+id/content"
+            android:id="@+id/help_content"
             android:layout_width="fill_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
@@ -97,9 +80,9 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="帮助信息"
-            android:textSize="15dp" />
+            android:layout_marginBottom="3dp"
+            android:textSize="20dp" />
         </LinearLayout>
-
 
 </LinearLayout>
 
@@ -109,8 +92,16 @@
         android:background="#E6E6E6" />
 
     <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="right"
+        android:background="@android:color/white"
+        >
+
+    <LinearLayout
         android:id="@+id/targetdisk"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
         android:layout_weight="1"
@@ -119,10 +110,10 @@
 
         <TextView
             android:layout_width="match_parent"
-            android:layout_height="32dp"
-            android:text="目标分区"
-            android:textSize="20dp"
-            android:textColor="#000000"
+            android:layout_height="50dp"
+            android:text="磁盘分区"
+            android:textSize="25dp"
+            android:textColor="@color/black"
             />
 
         <ListView
@@ -130,10 +121,29 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+    </LinearLayout>
+
         <Button
             android:id="@+id/recovery"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="开始部署" />
+            android:textSize="20dp"
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="50dp"
+            android:text="下一步" />
+
+        <TextView
+            android:id="@+id/rec_tv"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:textSize="20dp"
+            android:textColor="@color/mGreen"
+
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="3dp"
+            />
+
     </LinearLayout>
+
 </LinearLayout>

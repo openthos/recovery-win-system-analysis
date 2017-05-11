@@ -20,26 +20,26 @@ public class FileUtil {
     /**
      * 开始消息提示常量
      * */
-    public static final int startDownloadMeg = 1;
+    public static final int startDownloadMeg = 10;
 
     /**
      * 更新消息提示常量
      * */
-    public static final int updateDownloadMeg = 2;
+    public static final int updateDownloadMeg = 20;
 
     /**
      * 完成消息提示常量
      * */
-    public static final int endDownloadMeg = 3;
+    public static final int endDownloadMeg = 30;
 
     /**
      * 取消下载
      * */
-    public static final int cancleDownloadMeg = 4;
-    public static final int timeout = 5;
-    public static final int fileRight = 6;
-    public static final int fileWrong = 7;
-    public static final int fileNotExist =  8;
+    public static final int cancleDownloadMeg = 40;
+    public static final int timeout = 50;
+    public static final int fileRight = 60;
+    public static final int fileWrong = 70;
+    public static final int fileNotExist =  80;
 
     /**
      * 检验SDcard状态

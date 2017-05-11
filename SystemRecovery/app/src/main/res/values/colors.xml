@@ -11,4 +11,10 @@
     <color name="black">#ff000000</color>
     <color name="blue">#ff0000ff</color>
     <color name="gray">#e5e9f4</color>
+
+    <color name="mYellow">#F8E889</color>
+    <color name="mRed">#FE4365</color>
+    <color name="mGreen">#407434</color>
+    <color name="mBlue">#83AF9B</color>
+    <color name="diskBlue">#00314F</color>
 </resources>
