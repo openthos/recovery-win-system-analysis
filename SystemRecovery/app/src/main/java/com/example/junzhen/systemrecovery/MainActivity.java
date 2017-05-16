@@ -2,12 +2,8 @@ package com.example.junzhen.systemrecovery;
 
 
 import android.annotation.SuppressLint;
-import android.app.ActionBar;
 import android.app.Activity;
-/*
-import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AppCompatActivity;
-*/
+
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -18,22 +14,15 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.os.ParcelUuid;
 import android.os.PowerManager;
-import android.renderscript.ScriptGroup;
-import android.text.TextUtils;
 import android.util.Log;
-import android.util.LongSparseArray;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.webkit.DownloadListener;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
@@ -44,6 +33,7 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
@@ -57,24 +47,27 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.math.BigInteger;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/*
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+*/
 
-
-public class MainActivity extends Activity {
+public class MainActivity extends Activity{
 
     // private ConfigTab configTab;
     private MainTab mainTab;
     private static final int OUTPUT_BUFFER_SIZE = 1024;
 
-    private String wimfile7,wimfile8,wimfile10;
+    private String wimfile10;
 
     private String efi_win ;
 
@@ -388,7 +381,7 @@ public class MainActivity extends Activity {
         if (listems.isEmpty()) {
 
             //展示windows系统列表
-            str = exec("wimlib-imagex info " + wimfile7 + "\n");
+            str = exec("wimlib-imagex info " + wimfile10 + "\n");
             String[] info = str.split("\n");
 
             for (int i = 0; i < info.length; i++) {
@@ -1175,6 +1168,9 @@ public class MainActivity extends Activity {
         @Override
         protected Integer doInBackground(String... params) {
 
+            HttpURLConnection urlConn = null;
+            InputStream inputStream = null;
+
             InputStream is = null;
             RandomAccessFile savedFile = null;
             File file = null;
@@ -1190,7 +1186,9 @@ public class MainActivity extends Activity {
                 if (file.exists()){
                     downloadedLength = file.length();
                 }
+
                 long contentLength = getContentLength(downloadUrl);
+                //long contentLength = urlConn.getContentLength();
                 Log.d("DownloadTask: ","getContentLength: " + (contentLength / (1024*1024)) + "M" );
 
                 if (contentLength == 0){
@@ -1199,6 +1197,18 @@ public class MainActivity extends Activity {
                     return TYPE_SUCCESS;
                 }
 
+                URL url = new URL(downloadUrl);
+                urlConn = (HttpURLConnection) url.openConnection();
+                urlConn.setConnectTimeout(5000);
+                urlConn.setReadTimeout(5000);
+                urlConn.connect();
+
+                /*
+                urlConn.setRequestProperty("Range", "bytes=" + downloadedLength + "-");
+                urlConn.setUseCaches(false);
+                */
+
+                /*
                 OkHttpClient client = new OkHttpClient();
                 Request request = new Request.Builder()
                         //断点下载
@@ -1206,11 +1216,16 @@ public class MainActivity extends Activity {
                         .url(downloadUrl)
                         .build();
                 Response response = client.newCall(request).execute();
+                */
 
-                if(response != null){
-                    is = response.body().byteStream();
+                int response = urlConn.getResponseCode();
+                if(response == HttpURLConnection.HTTP_OK){
+                    inputStream = urlConn.getInputStream();
+                    is = new BufferedInputStream(inputStream);
+
+                    //is = response.body().byteStream();
                     savedFile = new RandomAccessFile(file, "rw");
-                    savedFile.seek(downloadedLength); //跳过已下载的字节
+                    //savedFile.seek(downloadedLength); //跳过已下载的字节
 
                     byte[] b = new byte[1024];
                     long total = 0;
@@ -1233,7 +1248,7 @@ public class MainActivity extends Activity {
                             publishProgress((total + downloadedLength), contentLength);
                         }
                     }
-                    response.body().close();
+                    //response.body().close();
                     return TYPE_SUCCESS;
                 }
 
@@ -1241,9 +1256,21 @@ public class MainActivity extends Activity {
                 e.printStackTrace();
             } finally {
                 try {
+                    if (urlConn != null) {
+                        urlConn.disconnect();
+                    }
+                    if (inputStream != null) {
+                        inputStream.close();
+                    }
+                    if (is != null) {
+                        is.close();
+                    }
+
+                    /*
                     if (is != null){
                         is.close();
                     }
+                    */
                     if (savedFile != null){
                         savedFile.close();
                     }
@@ -1306,6 +1333,33 @@ public class MainActivity extends Activity {
         }
 
         private long getContentLength(String downloadUrl) throws IOException{
+            HttpURLConnection connection = null;
+            long contenLength = 0;
+            try{
+                URL url = new URL(downloadUrl);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.connect();
+
+                if (connection.getResponseCode() == HttpURLConnection.HTTP_OK) {
+                    contenLength = connection.getContentLength();
+
+                    if(contenLength < 0){
+                        contenLength = Long.parseLong(connection.getHeaderField("Content-Length"));
+                    }
+
+                    Log.d("DownloadTask: ","getResponseCode: " + connection.getResponseCode() + ", getContentLength: " + contenLength);
+                }
+
+            }catch (Exception e){
+                e.printStackTrace();
+            }finally {
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
+            }
+            return contenLength;
+
+            /*
             OkHttpClient client = new OkHttpClient();
             Request request = new Request.Builder()
                     .url(downloadUrl)
@@ -1318,6 +1372,8 @@ public class MainActivity extends Activity {
                 return contenLength;
             }
             return 0;
+            */
+
         }
 
         public void pauseDownload(){
@@ -1608,98 +1664,5 @@ public class MainActivity extends Activity {
         }
     };
 
-    /*public class ListAdapter extends BaseAdapter {
 
-        ArrayList<ButtonView> arrayList = null;
-        LayoutInflater inflater;
-        View view;
-        ButtonLayoutHolder buttonLayoutHolder;
-        LinearLayout buttonLayout = null;
-        TextView buttonText = null;
-        ImageView buttonImage = null;
-
-        private int selectedPosition = -1;// 选中的位置
-
-        public ListAdapter(ArrayList<ButtonView> buttonListView) {
-            // TODO Auto-generated constructor stub
-            arrayList = buttonListView;
-        }
-
-        @Override
-        public int getCount() {
-            // TODO Auto-generated method stub
-            return arrayList.size();
-        }
-
-        @Override
-        public Object getItem(int position) {
-            // TODO Auto-generated method stub
-            return arrayList.get(position);
-        }
-
-        @Override
-        public long getItemId(int position) {
-            // TODO Auto-generated method stub
-            return position;
-        }
-
-        public void setSelectedPosition(int position) {
-            selectedPosition = position;
-        }
-
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            // TODO Auto-generated method stub
-            inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            view = inflater.inflate(R.layout.listview_item, null, false);
-            buttonLayoutHolder = (ButtonLayoutHolder) view.getTag();
-
-            if (buttonLayoutHolder == null) {
-                buttonLayoutHolder = new ButtonLayoutHolder();
-                buttonLayoutHolder.buttonLayout = (LinearLayout) view
-                        .findViewById(R.id.LinearLayout);
-                buttonLayoutHolder.textView = (TextView) view
-                        .findViewById(R.id.itemText);
-                buttonLayoutHolder.imageView = (ImageView) view
-                        .findViewById(R.id.itemImage);
-                view.setTag(buttonLayoutHolder);
-            }
-            buttonLayout = buttonLayoutHolder.buttonLayout;
-            buttonText = buttonLayoutHolder.textView;
-            buttonImage = buttonLayoutHolder.imageView;
-            if (selectedPosition == position) {
-                buttonText.setSelected(true);
-                buttonText.setPressed(true);
-                buttonLayout.setBackgroundColor(Color.RED);
-            } else {
-                buttonText.setSelected(false);
-                buttonText.setPressed(false);
-                buttonLayout.setBackgroundColor(Color.TRANSPARENT);
-
-            }
-
-            buttonText.setTextColor(Color.WHITE);
-            buttonText.setText(arrayList.get(position).textViewId);
-
-            return view;
-
-        }
-
-    }
-
-    ;
-
-    class ButtonView {
-        int textViewId;
-
-        ButtonView(int tId) {
-            textViewId = tId;
-        }
-    }
-
-    class ButtonLayoutHolder {
-        LinearLayout buttonLayout;
-        TextView textView;
-        ImageView imageView;
-    }*/
 }

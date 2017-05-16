@@ -16,7 +16,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:text="系统"
+            android:text="@string/left_bar"
             android:textSize="25dp"
             android:textColor="@color/black"
             />
@@ -24,7 +24,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="云端"
+            android:text="@string/online"
             android:textSize="20dp"
             android:textColor="@color/black"
             />
@@ -33,7 +33,7 @@
             android:id="@+id/online_win10"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Windows 镜像下载"
+            android:text="@string/bt_dl"
             android:gravity="left|center"
             android:layout_margin="10dp"
             />
@@ -41,7 +41,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="本地"
+            android:text="@string/offline"
             android:textSize="20dp"
             android:textColor="@color/black"
             />
@@ -50,7 +50,7 @@
             android:id="@+id/offline_win10"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Windows 镜像部署"
+            android:text="@string/bt_wim"
             android:gravity="left|center"
             android:layout_margin="10dp"
 
@@ -58,7 +58,7 @@
 
         <Button
             android:id="@+id/backup_efi"
-            android:text="Windows EFI 备份"
+            android:text="@string/bt_efi"
             android:gravity="left|center"
             android:layout_margin="10dp"
             android:layout_width="match_parent"
@@ -79,7 +79,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="帮助信息"
+            android:text="@string/help_info"
             android:layout_marginBottom="3dp"
             android:textSize="20dp" />
         </LinearLayout>
@@ -111,7 +111,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="50dp"
-            android:text="磁盘分区"
+            android:text="@string/main_bar"
             android:textSize="25dp"
             android:textColor="@color/black"
             />
@@ -130,7 +130,7 @@
             android:textSize="20dp"
             android:layout_marginRight="20dp"
             android:layout_marginBottom="50dp"
-            android:text="下一步" />
+            android:text="@string/next_step" />
 
         <TextView
             android:id="@+id/rec_tv"

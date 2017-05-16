@@ -28,4 +28,15 @@
     <string name="title_activity_recovery">RecoveryActivity</string>
     <string name="wechat">tongfang</string>
     <string name="tip">请选择您要恢复的系统！</string>
+    <string name="yes">确定</string>
+    <string name="no">取消</string>
+    <string name="online">云端</string>
+    <string name="offline">本地</string>
+    <string name="left_bar">系统</string>
+    <string name="main_bar">磁盘分区</string>
+    <string name="help_info">帮助信息</string>
+    <string name="bt_dl">Windows 镜像下载</string>
+    <string name="bt_wim">Windows 镜像部署</string>
+    <string name="bt_efi">Windwos EFI 备份</string>
+    <string name="next_step">下一步</string>
 </resources>
